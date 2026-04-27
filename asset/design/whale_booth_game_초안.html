@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>네이버 웨일 부스</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root {
+    --green: #03C75A;
+    --green-hover: #02b350;
+    --green-soft: #f1faf3;
+    --bg: #FFFFFF;
+    --bg-soft: #FAFAFA;
+    --text: #1A1A1A;
+    --text-secondary: #525252;
+    --text-muted: #8C8C8C;
+    --border-light: #F0F0F0;
+    --border: #E5E5E5;
+    --border-strong: #1A1A1A;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: var(--font); color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; line-height: 1.5; }
+  button { font-family: inherit; cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+
+  .app { min-height: 100vh; }
+
+  /* ========== NAV ========== */
+  .nav { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+  .nav-logo { display: flex; align-items: center; gap: 0.625rem; font-weight: 700; font-size: 1.05rem; }
+  .nav-logo-mark { width: 28px; height: 28px; border-radius: 50%; background: var(--green); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.875rem; }
+  .nav-links { display: flex; gap: 0.25rem; list-style: none; }
+  .nav-links button { background: none; border: none; padding: 0.5rem 1rem; color: var(--text-secondary); font-size: 0.95rem; font-weight: 500; border-radius: var(--radius-sm); transition: color 0.15s; }
+  .nav-links button:hover { color: var(--text); }
+  .nav-links button.active { color: var(--green); font-weight: 700; }
+
+  /* ========== SCREEN SYSTEM ========== */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .page { max-width: 1200px; margin: 0 auto; padding: 5rem 2rem; }
+  .page-title { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 0.75rem; }
+  .page-subtitle { font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 4rem; }
+
+  /* ========== BUTTONS ========== */
+  .btn { padding: 0.75rem 1.5rem; border-radius: var(--radius-md); font-size: 1rem; font-weight: 600; border: 1px solid transparent; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-primary { background: var(--green); color: white; }
+  .btn-primary:hover:not(:disabled) { background: var(--green-hover); }
+  .btn-secondary { background: var(--bg); color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--text); }
+  .btn-ghost { background: transparent; color: var(--text-secondary); }
+  .btn-ghost:hover:not(:disabled) { color: var(--text); background: var(--bg-soft); }
+  .btn-large { padding: 1rem 2rem; font-size: 1.0625rem; }
+
+  /* ========== LANDING (슬라이드쇼) ========== */
+  .slideshow { position: relative; height: 100vh; overflow: hidden; }
+  .slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 2rem; opacity: 0; transition: opacity 0.7s ease; pointer-events: none; }
+  .slide.active { opacity: 1; pointer-events: auto; }
+  .slide-content { text-align: center; max-width: 1100px; width: 100%; }
+  .slide-eyebrow { display: inline-block; font-size: 0.8125rem; font-weight: 700; color: var(--green); letter-spacing: 0.14em; text-transform: uppercase; padding: 0.375rem 0.875rem; border: 1px solid var(--green); border-radius: 100px; margin-bottom: 2rem; }
+  .slide-title { font-size: 4.25rem; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; margin-bottom: 1.5rem; }
+  .slide-title .green { color: var(--green); }
+  .slide-sub { font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 4rem; }
+  .slide-preview { margin-bottom: 4rem; }
+
+  .preview-steps { display: flex; gap: 1.5rem; justify-content: center; align-items: center; flex-wrap: wrap; }
+  .preview-step { text-align: center; }
+  .preview-step-num { width: 64px; height: 64px; border-radius: 50%; background: var(--green); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.625rem; font-weight: 800; margin: 0 auto 0.875rem; }
+  .preview-step-name { font-size: 1.125rem; font-weight: 700; }
+  .preview-arrow { color: var(--text-muted); font-size: 1.5rem; font-weight: 400; padding-bottom: 2rem; }
+
+  .preview-features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; max-width: 800px; margin: 0 auto; }
+  .preview-feature { padding: 1.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-lg); font-weight: 700; font-size: 1.0625rem; display: flex; flex-direction: column; align-items: center; gap: 0.625rem; }
+  .preview-feature span { font-size: 0.6875rem; font-weight: 700; color: var(--green); letter-spacing: 0.14em; }
+
+  .preview-cards { display: flex; gap: 0.75rem; justify-content: center; }
+
+  /* 슬라이드 2~5: 기능별 좌우 2분할 (텍스트 + 스크린샷) */
+  .slide-feature-content { max-width: 1280px; width: 100%; padding: 0 1rem; }
+  .feature-detail-row { display: grid; grid-template-columns: 1fr 1.15fr; gap: 4rem; align-items: center; }
+  .feature-detail-text { text-align: left; }
+  .feature-detail-text .slide-eyebrow { margin-bottom: 1.5rem; }
+  .feature-detail-title { font-size: 4rem; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; margin: 0 0 1.5rem; color: var(--text); }
+  .feature-detail-desc { font-size: 1.125rem; color: var(--text-secondary); line-height: 1.7; margin: 0 0 1.5rem; }
+  .feature-detail-text .detail-feature-tags { margin-bottom: 1.5rem; }
+  .feature-detail-scenario { padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 1rem; color: var(--text-secondary); line-height: 1.65; }
+
+  .feature-detail-visual { width: 100%; }
+  .feature-screenshot-placeholder { aspect-ratio: 16 / 10; background: var(--bg-soft); border: 1.5px dashed var(--border-strong); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; font-size: 1rem; line-height: 1.6; padding: 2rem; }
+  .feature-screenshot-placeholder img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-lg); }
+
+  /* 슬라이드 2: 자세한 4기능 카드 (2×2 그리드) — 더 이상 사용 안 함, 하위 호환 위해 유지 */
+  .slide-title-sm { font-size: 2.75rem; margin-bottom: 0.5rem; line-height: 1.15; }
+  .detail-features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; max-width: 1100px; margin: 2.5rem auto 0; }
+  .detail-feature { padding: 2rem 1.75rem; border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: left; background: var(--bg); }
+  .detail-feature-num { font-size: 0.75rem; font-weight: 700; color: var(--green); letter-spacing: 0.12em; margin-bottom: 0.75rem; }
+  .detail-feature-name { font-size: 1.375rem; font-weight: 700; margin: 0 0 0.625rem; letter-spacing: -0.01em; }
+  .detail-feature-desc { font-size: 1rem; color: var(--text-secondary); line-height: 1.6; margin: 0 0 1rem; }
+  .detail-feature-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .detail-feature-tag { font-size: 0.75rem; padding: 0.25rem 0.625rem; border: 1px solid var(--border); border-radius: 100px; color: var(--text-muted); font-weight: 500; }
+  .detail-feature-scenario { padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.6; }
+  .detail-scenario-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--green); letter-spacing: 0.04em; margin-bottom: 0.5rem; }
+
+  .slide-indicator { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.625rem; }
+  .slide-dot { width: 32px; height: 4px; background: var(--border); border-radius: 2px; cursor: pointer; transition: all 0.3s; border: none; padding: 0; }
+  .slide-dot.active { background: var(--green); width: 64px; }
+
+  /* QR 코드 placeholder (사용자가 이미지 교체 예정) */
+  .qr-placeholder { width: 200px; height: 200px; border: 1.5px dashed var(--border-strong); border-radius: var(--radius-md); background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; margin: 0 auto; cursor: pointer; transition: all 0.15s; padding: 1rem; }
+  .qr-placeholder:hover { border-color: var(--green); border-style: solid; background: var(--green-soft); }
+  .qr-placeholder img { width: 100%; height: 100%; object-fit: contain; }
+  .qr-placeholder-label { font-size: 0.9375rem; font-weight: 700; color: var(--text); }
+  .qr-placeholder-sub { font-size: 0.75rem; color: var(--text-muted); text-align: center; line-height: 1.4; }
+  .qr-caption { font-size: 0.875rem; color: var(--text-muted); margin-top: 1rem; }
+
+  /* ========== LANDING (구버전 .hero - 미사용) ========== */
+  .hero { padding: 6rem 2rem 4rem; text-align: center; max-width: 1100px; margin: 0 auto; }
+  .hero-eyebrow { display: inline-block; font-size: 0.8125rem; font-weight: 700; color: var(--green); letter-spacing: 0.12em; text-transform: uppercase; padding: 0.375rem 0.875rem; border: 1px solid var(--green); border-radius: 100px; margin-bottom: 2rem; }
+  .hero-title { font-size: 4rem; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; margin-bottom: 1.25rem; }
+  .hero-title .green { color: var(--green); }
+  .hero-sub { font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 4rem; }
+
+  .hero-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 1000px; margin: 0 auto; }
+  .hero-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2.25rem 1.75rem; cursor: pointer; transition: border-color 0.15s; text-align: left; }
+  .hero-card:hover { border-color: var(--text); }
+  .hero-card:hover .hero-card-arrow { color: var(--green); }
+  .hero-card-num { font-size: 0.75rem; font-weight: 700; color: var(--green); letter-spacing: 0.12em; margin-bottom: 1.25rem; }
+  .hero-card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+  .hero-card-desc { font-size: 0.9375rem; color: var(--text-muted); margin-bottom: 2rem; line-height: 1.55; }
+  .hero-card-arrow { font-size: 0.9375rem; color: var(--text-muted); font-weight: 500; transition: color 0.15s; }
+
+  /* ========== SCROLL SNAP (CONDITIONS) ========== */
+  .scroll-screen { height: 100vh; overflow-y: auto; scroll-snap-type: y mandatory; position: relative; }
+  .scroll-page { min-height: 100vh; scroll-snap-align: start; display: flex; align-items: center; justify-content: center; padding: 3rem 2rem; }
+  .scroll-page-inner { max-width: 960px; width: 100%; }
+
+  .scroll-progress { position: absolute; right: 2.25rem; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 0.625rem; z-index: 5; }
+  .scroll-dot { width: 10px; height: 10px; border-radius: 50%; background: transparent; border: 1.5px solid var(--border-strong); cursor: pointer; transition: all 0.2s; }
+  .scroll-dot.active { background: var(--green); border-color: var(--green); transform: scale(1.2); }
+
+  .scroll-hint { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.875rem; margin-top: 3rem; animation: bounce 2s ease-in-out infinite; }
+  @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+  .step-eyebrow { display: inline-block; font-size: 0.8125rem; font-weight: 700; color: var(--green); letter-spacing: 0.14em; margin-bottom: 1.25rem; }
+  .step-title { font-size: 2.75rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 1.25rem; }
+  .step-desc { font-size: 1.0625rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 1rem; }
+  .step-desc strong { color: var(--text); font-weight: 700; }
+
+  .step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+  .step-mockup { aspect-ratio: 9/16; max-height: 500px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.9375rem; padding: 2rem; text-align: center; line-height: 1.6; margin: 0 auto; width: fit-content; min-width: 240px; }
+
+  .code-display { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-soft); max-width: 500px; margin: 2rem auto; }
+  .code-value { font-family: 'Menlo', 'Monaco', monospace; font-size: 1.625rem; font-weight: 700; letter-spacing: 0.15em; color: var(--text); }
+
+  .download-row { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin: 2rem 0; }
+
+  .booth-notice { padding: 1.75rem 2rem; border: 1px solid var(--border); border-radius: var(--radius-lg); max-width: 600px; margin: 2.5rem auto 2rem; text-align: left; }
+  .booth-notice-label { font-size: 0.75rem; font-weight: 700; color: var(--green); letter-spacing: 0.12em; margin-bottom: 0.75rem; }
+  .booth-notice-body { font-size: 1rem; line-height: 1.65; color: var(--text-secondary); }
+  .booth-notice-body strong { color: var(--green); font-weight: 700; }
+
+  /* 상품 이미지 영역 */
+  .prize-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 600px; margin: 2.5rem auto 0; }
+  .prize-item { text-align: center; }
+  .prize-image { aspect-ratio: 1 / 1; background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; margin-bottom: 0.875rem; overflow: hidden; }
+  .prize-image img { width: 100%; height: 100%; object-fit: cover; }
+  .prize-placeholder { color: var(--text-muted); font-size: 0.9375rem; line-height: 1.6; padding: 1rem; }
+  .prize-name { font-weight: 700; font-size: 1rem; color: var(--text); letter-spacing: -0.01em; }
+
+  /* ========== FEATURES ========== */
+  .features-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .feature-item { padding: 2rem 1.75rem; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+  .feature-num { font-size: 0.75rem; font-weight: 700; color: var(--green); letter-spacing: 0.12em; margin-bottom: 0.75rem; }
+  .feature-name { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+  .feature-desc { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ========== RULES ========== */
+  .rules-page { max-width: 880px; margin: 0 auto; padding: 5rem 2rem 4rem; }
+  .rules-intro { padding-bottom: 2.5rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); }
+
+  .rules-section { padding: 2.5rem 0; border-top: 1px solid var(--border-light); }
+  .rules-section:first-of-type { border-top: 1px solid var(--border); }
+  .rules-section-row { display: grid; grid-template-columns: 200px 1fr; gap: 3rem; align-items: start; }
+  .rules-section-num { font-size: 0.8125rem; font-weight: 700; color: var(--green); letter-spacing: 0.14em; }
+  .rules-section-title { font-size: 1.375rem; font-weight: 700; margin-top: 0.5rem; letter-spacing: -0.01em; }
+  .rules-section-body { font-size: 1.0625rem; color: var(--text-secondary); line-height: 1.75; }
+  .rules-section-body strong { color: var(--text); font-weight: 700; }
+  .rules-section-body .green { color: var(--green); font-weight: 700; }
+
+  .rules-card-preview { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem; }
+
+  .rules-action-row { display: flex; gap: 0.75rem; justify-content: center; padding-top: 3rem; border-top: 1px solid var(--border); margin-top: 3rem; }
+
+  /* ========== CARDS ========== */
+  .card { width: 80px; height: 115px; border: 1.5px solid var(--text); border-radius: var(--radius-sm); padding: 0.5rem; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg); user-select: none; font-weight: 700; transition: transform 0.15s, border-color 0.15s; }
+  .card.large { width: 110px; height: 160px; padding: 0.75rem; }
+  .card.mini { width: 50px; height: 72px; padding: 0.4rem; font-size: 0.6875rem; }
+  .card.llama { background: var(--green-soft); border-color: var(--green); color: var(--green); }
+  .card.back { background: var(--text); border-color: var(--text); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800; }
+  .card.back::before { content: 'W'; }
+  .card.mini.back { font-size: 0.875rem; }
+  .card-value-top { font-size: 1.125rem; line-height: 1; }
+  .card.large .card-value-top { font-size: 1.5rem; }
+  .card.mini .card-value-top { font-size: 0.875rem; }
+  .card-name { font-size: 0.6875rem; align-self: center; color: var(--text-secondary); font-weight: 600; }
+  .card.large .card-name { font-size: 0.8125rem; }
+  .card.mini .card-name { font-size: 0.5625rem; }
+  .card.llama .card-name { color: var(--green); }
+  .card-value-bottom { font-size: 1.125rem; line-height: 1; align-self: flex-end; transform: rotate(180deg); }
+  .card.large .card-value-bottom { font-size: 1.5rem; }
+  .card.mini .card-value-bottom { font-size: 0.875rem; }
+  .card.playable { cursor: pointer; }
+  .card.playable:hover { transform: translateY(-10px); border-color: var(--green); }
+  .card.disabled { opacity: 0.3; }
+
+  /* ========== GAME ========== */
+  .game-page { max-width: 1300px; margin: 0 auto; padding: 2rem; }
+  .game-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2.5rem; }
+  .game-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.015em; }
+  .turn-indicator { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.9375rem; font-weight: 600; color: var(--text-secondary); }
+  .turn-indicator.active { border-color: var(--green); color: var(--green); }
+  .turn-indicator.ended { border-color: var(--text); color: var(--text); }
+
+  .game-board { display: grid; grid-template-rows: auto 1fr auto; gap: 2.5rem; }
+
+  .npc-area { display: flex; justify-content: center; gap: 5rem; }
+  .npc { text-align: center; min-width: 200px; }
+  .npc-badge { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 1.25rem; font-weight: 600; font-size: 0.9375rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
+  .npc-badge.active { border-color: var(--green); color: var(--green); }
+  .npc-badge.quitted { border-color: var(--border-light); color: var(--text-muted); background: var(--bg-soft); }
+  .npc-badge .count { font-size: 0.8125rem; color: var(--text-muted); font-weight: 500; }
+  .npc-badge.active .count { color: var(--green); }
+  .npc-cards { display: flex; justify-content: center; min-height: 100px; }
+  .npc-cards .card { margin-left: -1.5rem; }
+  .npc-cards .card:first-child { margin-left: 0; }
+
+  .center-area { display: flex; justify-content: center; gap: 5rem; align-items: center; padding: 2.5rem 0; border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); }
+  .deck-slot { text-align: center; }
+  .deck-label { font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.625rem; font-weight: 600; letter-spacing: 0.04em; }
+  .deck-label .count { color: var(--text); font-weight: 700; }
+
+  .player-area { text-align: center; padding-top: 1.5rem; }
+  .player-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); font-weight: 600; font-size: 0.9375rem; margin-bottom: 1.5rem; }
+  .player-badge.active { border-color: var(--green); color: var(--green); }
+  .player-badge.quitted { border-color: var(--border-light); color: var(--text-muted); background: var(--bg-soft); }
+  .player-badge .count { font-size: 0.8125rem; color: var(--text-muted); font-weight: 500; }
+  .player-badge.active .count { color: var(--green); }
+
+  .player-cards { display: flex; gap: 0.875rem; justify-content: center; margin-bottom: 1.75rem; min-height: 165px; align-items: center; flex-wrap: wrap; }
+  .player-empty { color: var(--text-muted); font-size: 0.9375rem; padding: 2rem 0; }
+  .game-actions { display: flex; gap: 0.75rem; justify-content: center; }
+
+  /* ========== RESULT ========== */
+  .result-page { max-width: 1100px; margin: 0 auto; padding: 5rem 2rem 4rem; text-align: center; }
+  .result-title { font-size: 3rem; font-weight: 800; letter-spacing: -0.025em; margin-bottom: 0.75rem; line-height: 1.1; }
+  .result-title.win { color: var(--green); }
+  .result-prize { font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 4rem; padding-bottom: 4rem; border-bottom: 1px solid var(--border); }
+  .result-prize.win { color: var(--text); font-weight: 600; }
+
+  .result-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 4rem; }
+  .result-player { padding: 2rem 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+  .result-player.winner { border: 2px solid var(--green); padding: calc(2rem - 1px) calc(1.5rem - 1px); }
+  .result-player.you { border-color: var(--text); }
+  .result-player.you.winner { border-color: var(--green); }
+  .result-player-name { font-weight: 700; margin-bottom: 1.25rem; font-size: 1.0625rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .result-player-name-tag { font-size: 0.75rem; font-weight: 700; color: var(--green); padding: 0.125rem 0.5rem; border: 1px solid var(--green); border-radius: 100px; }
+  .result-cards { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; min-height: 90px; align-items: center; margin-bottom: 1.5rem; }
+  .result-empty { color: var(--text-muted); font-size: 0.9375rem; padding: 1.75rem 0; font-weight: 600; }
+  .result-score-block { padding-top: 1rem; border-top: 1px solid var(--border-light); }
+  .result-score { font-size: 2.25rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+  .result-score.zero { color: var(--green); }
+  .result-score-label { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.375rem; font-weight: 500; }
+
+  .result-actions { display: flex; gap: 0.75rem; justify-content: center; }
+
+  /* 등수 뱃지 */
+  .rank-badge { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 100px; font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+  .rank-badge.rank-1 { background: var(--green); color: white; }
+  .rank-badge.rank-2 { background: var(--bg); color: var(--text); border: 1px solid var(--border-strong); }
+  .rank-badge.rank-3 { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+
+  /* ========== 룰 페이지 시각 예시 ========== */
+  .rule-cards-display { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 2.5rem 0 1.5rem; }
+  .rule-card-with-points { display: flex; flex-direction: column; align-items: center; gap: 0.625rem; }
+  .rule-card-points { font-size: 0.9375rem; font-weight: 700; color: var(--text-secondary); font-family: 'Menlo', monospace; }
+  .rule-card-points.llama { color: var(--green); }
+  .rule-card-note { font-size: 0.9375rem; color: var(--text-secondary); margin-top: 1.5rem; line-height: 1.65; }
+  .rule-card-note strong { color: var(--green); font-weight: 700; }
+
+  .rule-example { display: flex; flex-direction: column; gap: 1.5rem; align-items: center; margin: 2rem auto; max-width: 700px; }
+  .rule-example-bottom { text-align: center; }
+  .rule-example-arrow { font-size: 1.5rem; color: var(--text-muted); }
+  .rule-example-options { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%; }
+  .rule-option-row { padding: 1.25rem; border-radius: var(--radius-lg); text-align: center; }
+  .rule-option-row.good { border: 1px solid var(--green); background: var(--green-soft); }
+  .rule-option-row.bad { border: 1px solid var(--border); background: var(--bg-soft); }
+  .rule-option-label { display: block; font-size: 0.875rem; font-weight: 700; margin-bottom: 0.875rem; letter-spacing: 0.04em; }
+  .rule-option-row.good .rule-option-label { color: var(--green); }
+  .rule-option-row.bad .rule-option-label { color: var(--text-muted); }
+  .rule-option-cards { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+  .rule-option-cards .card { width: 56px; height: 80px; padding: 0.4rem; }
+  .rule-option-cards .card .card-value-top, .rule-option-cards .card .card-value-bottom { font-size: 0.8125rem; }
+  .rule-option-cards .card .card-name { font-size: 0.5625rem; }
+  .rule-option-cards .card.faded { opacity: 0.4; }
+
+  .small-label { display: block; font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 0.875rem; }
+
+  .rule-actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin: 2.5rem auto 1rem; max-width: 800px; }
+  .rule-action-card { text-align: center; padding: 2rem 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+  .rule-action-icon { width: 52px; height: 52px; border-radius: 50%; background: var(--green); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.375rem; font-weight: 800; margin: 0 auto 1rem; }
+  .rule-action-card h3 { font-size: 1.125rem; font-weight: 700; margin: 0 0 0.5rem; letter-spacing: -0.01em; }
+  .rule-action-card p { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.55; margin: 0; }
+
+  .rule-score-example { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; margin: 2.5rem 0 1rem; }
+  .rule-score-cards { display: flex; gap: 0.5rem; justify-content: center; }
+  .rule-score-arrow { font-size: 1.5rem; color: var(--text-muted); }
+  .rule-score-calc { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem 2rem; min-width: 380px; display: flex; flex-direction: column; gap: 0.75rem; }
+  .rule-score-line { display: flex; justify-content: space-between; align-items: center; font-size: 1rem; color: var(--text-secondary); }
+  .rule-score-line span:first-child { text-align: left; }
+  .rule-score-line span:last-child { font-weight: 700; color: var(--text); font-family: 'Menlo', monospace; }
+  .rule-score-line.note { font-size: 0.8125rem; color: var(--text-muted); font-style: italic; }
+  .rule-score-line.note span:last-child { font-family: var(--font); font-style: normal; color: var(--text-muted); font-weight: 500; }
+  .rule-score-total { display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 700; padding-top: 0.875rem; border-top: 1px solid var(--border); }
+  .rule-score-total span:last-child { color: var(--green); font-family: 'Menlo', monospace; }
+
+  .rule-winner-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 700px; margin: 2.5rem auto 1.5rem; }
+  .rule-mini-result { padding: 1.5rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: center; }
+  .rule-mini-result.win { border: 2px solid var(--green); padding: calc(1.5rem - 1px) calc(1rem - 1px); }
+  .rule-mini-rank { font-size: 0.875rem; font-weight: 700; color: var(--green); margin-bottom: 0.5rem; letter-spacing: 0.04em; }
+  .rule-mini-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.625rem; }
+  .rule-mini-score { font-size: 1.875rem; font-weight: 800; font-family: 'Menlo', monospace; line-height: 1; }
+  .rule-mini-result.win .rule-mini-score { color: var(--green); }
+  .rule-mini-result.lose .rule-mini-score { color: var(--text); }
+  .rule-mini-note { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.5rem; }
+  .rule-prize-note { margin: 2rem auto 1.5rem; padding: 1.5rem 2rem; border: 1px solid var(--border); border-radius: var(--radius-lg); font-size: 1rem; line-height: 1.7; color: var(--text-secondary); max-width: 500px; text-align: center; }
+  .rule-prize-note strong { color: var(--green); font-weight: 700; }
+
+  /* 차별점 페이지 보강 */
+  .feature-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+  .feature-tag { font-size: 0.75rem; padding: 0.25rem 0.625rem; border: 1px solid var(--border); border-radius: 100px; color: var(--text-muted); font-weight: 500; }
+  .feature-scenario { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; }
+  .feature-scenario strong { color: var(--green); font-weight: 700; }
+
+  /* ========== 다라운드 게임 표시 ========== */
+  .game-header-left { display: flex; align-items: center; gap: 1rem; }
+  .game-round-pill { font-size: 0.75rem; font-weight: 700; color: var(--green); letter-spacing: 0.12em; padding: 0.375rem 0.75rem; border: 1px solid var(--green); border-radius: 100px; background: var(--green-soft); }
+
+  .game-cumulative-strip { display: flex; align-items: center; gap: 1rem; padding: 0.875rem 1.25rem; background: var(--bg-soft); border-radius: var(--radius-md); margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .cum-strip-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.12em; }
+  .cum-strip-cell { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.875rem; background: var(--bg); border: 1px solid var(--border); border-radius: 100px; }
+  .cum-strip-cell.you { border-color: var(--text); border-width: 1.5px; padding: calc(0.375rem - 0.5px) calc(0.875rem - 0.5px); }
+  .cum-strip-name { font-size: 0.875rem; font-weight: 700; }
+  .cum-strip-you { display: inline-block; font-size: 0.6875rem; font-weight: 700; color: white; background: var(--text); padding: 0.0625rem 0.375rem; border-radius: 100px; margin-left: 0.375rem; }
+  .cum-strip-score { font-size: 0.875rem; font-weight: 700; font-family: 'Menlo', monospace; }
+  .cum-strip-score.zero { color: var(--green); }
+
+  /* 라운드 결과 화면 */
+  .round-result-page { max-width: 1000px; margin: 0 auto; padding: 4rem 2rem; text-align: center; }
+  .round-result-page .step-eyebrow { margin-bottom: 1.5rem; }
+  .round-section { margin: 2.5rem 0; }
+  .round-section-label { font-size: 0.875rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 1rem; text-transform: uppercase; }
+  .round-section-sub { color: var(--text-muted); font-weight: 500; letter-spacing: 0; text-transform: none; margin-left: 0.5rem; font-size: 0.8125rem; }
+  .round-score-list { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .round-score-row { flex: 1; min-width: 180px; max-width: 220px; padding: 1.5rem 1.25rem; border: 1px solid var(--border); border-radius: var(--radius-lg); text-align: center; background: var(--bg); }
+  .round-score-row.you { border: 2px solid var(--text); padding: calc(1.5rem - 1px) calc(1.25rem - 1px); }
+  .round-score-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.625rem; }
+  .round-score-tag { display: inline-block; font-size: 0.6875rem; font-weight: 700; color: white; background: var(--text); padding: 0.0625rem 0.375rem; border-radius: 100px; margin-left: 0.375rem; }
+  .round-score-value { font-size: 1.875rem; font-weight: 800; font-family: 'Menlo', monospace; line-height: 1; }
+  .round-score-value.zero { color: var(--green); }
+  .round-result-actions { margin-top: 3rem; }
+
+  /* 결과 화면 라운드 breakdown */
+  .result-rounds { display: flex; gap: 1rem; justify-content: center; margin-top: 0.875rem; padding: 0.625rem 0.875rem; background: var(--bg-soft); border-radius: var(--radius-md); }
+  .result-rounds-cell { display: flex; flex-direction: column; gap: 0.125rem; align-items: center; }
+  .result-rounds-label { font-size: 0.625rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.08em; }
+  .result-rounds-value { font-size: 0.9375rem; font-weight: 700; font-family: 'Menlo', monospace; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 0.875rem 1.5rem; border-radius: var(--radius-md); font-size: 0.9375rem; font-weight: 600; z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 0. LANDING (자동 슬라이드쇼) -->
+  <div class="screen active" id="screen-landing">
+    <div class="slideshow">
+      <!-- Slide 1: 부스 참가방법 -->
+      <div class="slide active" data-slide="0">
+        <div class="slide-content">
+          <span class="slide-eyebrow">참가 방법</span>
+          <h1 class="slide-title">3단계로 끝나는<br/>부스 참여</h1>
+          <p class="slide-sub">QR 스캔 → 추천인 코드 등록 → 부스 방문</p>
+          <div class="slide-preview">
+            <div class="preview-steps">
+              <div class="preview-step">
+                <div class="preview-step-num">1</div>
+                <div class="preview-step-name">웨일 설치</div>
+              </div>
+              <div class="preview-arrow">→</div>
+              <div class="preview-step">
+                <div class="preview-step-num">2</div>
+                <div class="preview-step-name">코드 등록</div>
+              </div>
+              <div class="preview-arrow">→</div>
+              <div class="preview-step">
+                <div class="preview-step-num">3</div>
+                <div class="preview-step-name">부스 방문</div>
+              </div>
+            </div>
+          </div>
+          <div class="qr-placeholder" onclick="showScreen('conditions')">
+            <div class="qr-placeholder-label">QR 코드</div>
+            <div class="qr-placeholder-sub">이미지 삽입 위치<br/>(스캔 시 추천인 코드로 이동)</div>
+          </div>
+          <p class="qr-caption">모바일에서 스캔하거나 클릭으로 자세히 보기</p>
+        </div>
+      </div>
+
+      <!-- Slide 2: 사이드바 -->
+      <div class="slide" data-slide="1">
+        <div class="slide-feature-content">
+          <div class="feature-detail-row">
+            <div class="feature-detail-text">
+              <span class="slide-eyebrow">기능 01</span>
+              <h1 class="feature-detail-title">사이드바</h1>
+              <p class="feature-detail-desc">화면 한쪽에 자주 쓰는 사이트나 메신저를 항상 띄워두고 메인 작업과 동시에 사용하는 멀티태스킹 기능</p>
+              <div class="detail-feature-tags">
+                <span class="detail-feature-tag">멀티태스킹</span>
+                <span class="detail-feature-tag">Drag &amp; Drop</span>
+                <span class="detail-feature-tag">단축키</span>
+              </div>
+              <div class="feature-detail-scenario">
+                <span class="detail-scenario-label">이럴 때 좋아요</span>
+                강의 영상 보면서 옆에 노션 메모 띄우기 · 카톡 PC 답장하면서 자료 검색
+              </div>
+            </div>
+            <div class="feature-detail-visual">
+              <div class="feature-screenshot-placeholder">
+                <span>실제 사용 화면<br/>(사이드바 스크린샷)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: 웨일 스페이스 -->
+      <div class="slide" data-slide="2">
+        <div class="slide-feature-content">
+          <div class="feature-detail-row">
+            <div class="feature-detail-text">
+              <span class="slide-eyebrow">기능 02</span>
+              <h1 class="feature-detail-title">웨일 스페이스</h1>
+              <p class="feature-detail-desc">탭 그룹으로 작업·공부·취미를 따로 관리. 여러 프로필을 한 창에서 전환하고 클라우드 동기화로 어디서나 동일한 환경</p>
+              <div class="detail-feature-tags">
+                <span class="detail-feature-tag">탭 그룹</span>
+                <span class="detail-feature-tag">멀티 프로필</span>
+                <span class="detail-feature-tag">동기화</span>
+              </div>
+              <div class="feature-detail-scenario">
+                <span class="detail-scenario-label">이럴 때 좋아요</span>
+                학교 / 알바 / 사이드 프로젝트 탭 분리 · 노트북·데스크탑 같은 환경 유지
+              </div>
+            </div>
+            <div class="feature-detail-visual">
+              <div class="feature-screenshot-placeholder">
+                <span>실제 사용 화면<br/>(웨일 스페이스 스크린샷)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: 웨일온 -->
+      <div class="slide" data-slide="3">
+        <div class="slide-feature-content">
+          <div class="feature-detail-row">
+            <div class="feature-detail-text">
+              <span class="slide-eyebrow">기능 03</span>
+              <h1 class="feature-detail-title">웨일온</h1>
+              <p class="feature-detail-desc">설치 없이 브라우저에서 바로 화상회의. 시간 제한 없이 무료로 사용 가능하고 화면 공유·녹화·자막까지 한 번에</p>
+              <div class="detail-feature-tags">
+                <span class="detail-feature-tag">설치 불필요</span>
+                <span class="detail-feature-tag">무료</span>
+                <span class="detail-feature-tag">화면 공유</span>
+              </div>
+              <div class="feature-detail-scenario">
+                <span class="detail-scenario-label">이럴 때 좋아요</span>
+                팀플 발표 연습 · 온라인 스터디 · 멀리 있는 친구와 게임 같이 보기
+              </div>
+            </div>
+            <div class="feature-detail-visual">
+              <div class="feature-screenshot-placeholder">
+                <span>실제 사용 화면<br/>(웨일온 스크린샷)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 5: 그린드랍 -->
+      <div class="slide" data-slide="4">
+        <div class="slide-feature-content">
+          <div class="feature-detail-row">
+            <div class="feature-detail-text">
+              <span class="slide-eyebrow">기능 04</span>
+              <h1 class="feature-detail-title">그린드랍</h1>
+              <p class="feature-detail-desc">모바일과 PC 사이에 사진·파일·URL을 한 번의 탭으로 전송. 메신저를 거치지 않고 직접 보내고 받을 수 있어요</p>
+              <div class="detail-feature-tags">
+                <span class="detail-feature-tag">파일 전송</span>
+                <span class="detail-feature-tag">URL 공유</span>
+                <span class="detail-feature-tag">크로스 디바이스</span>
+              </div>
+              <div class="feature-detail-scenario">
+                <span class="detail-scenario-label">이럴 때 좋아요</span>
+                폰으로 찍은 사진 PC로 즉시 전송 · 모바일에서 본 페이지 PC로 이어보기
+              </div>
+            </div>
+            <div class="feature-detail-visual">
+              <div class="feature-screenshot-placeholder">
+                <span>실제 사용 화면<br/>(그린드랍 스크린샷)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 6: 게임 시작 (기존 슬라이드 3) -->
+      <div class="slide" data-slide="5">
+        <div class="slide-content">
+          <span class="slide-eyebrow">WHALE BOOTH GAME</span>
+          <h1 class="slide-title">웨일프렌즈와<br/><span class="green">한 판 어때?</span></h1>
+          <p class="slide-sub">함께하면 더 즐거운 부스 게임</p>
+          <div class="slide-preview">
+            <div class="preview-cards" id="slide-game-cards"></div>
+          </div>
+          <button class="btn btn-primary btn-large" onclick="showRules()">게임 시작 ▶</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 1-1. CONDITIONS (scroll-snap multi-page) -->
+  <div class="screen scroll-screen" id="screen-conditions">
+    <div class="scroll-progress">
+      <div class="scroll-dot active" data-page="0"></div>
+      <div class="scroll-dot" data-page="1"></div>
+      <div class="scroll-dot" data-page="2"></div>
+      <div class="scroll-dot" data-page="3"></div>
+    </div>
+
+    <!-- intro -->
+    <section class="scroll-page">
+      <div class="scroll-page-inner" style="text-align: center;">
+        <span class="step-eyebrow">참가 방법</span>
+        <h1 class="step-title">3단계로 끝나는<br/>부스 참여</h1>
+        <p class="step-desc" style="max-width: 600px; margin: 0 auto;">아래로 스크롤해서 단계별로 확인하세요.<br/>오른쪽 점을 클릭해도 이동할 수 있어요.</p>
+        <div class="scroll-hint">
+          <span>스크롤하기</span>
+          <span style="font-size: 1.25rem;">↓</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- step 1: 모바일 코드 입력법 -->
+    <section class="scroll-page">
+      <div class="scroll-page-inner">
+        <div class="step-grid">
+          <div>
+            <span class="step-eyebrow">STEP 01</span>
+            <h2 class="step-title">웨일 앱에서<br/>추천인 코드 입력</h2>
+            <p class="step-desc">네이버 웨일 모바일 앱을 실행하고 <strong>설정 → 추천인 코드</strong> 메뉴로 이동해주세요.</p>
+            <p class="step-desc">안내 화면에서 부스 추천인 코드를 입력하면 등록 완료입니다.</p>
+            <p class="step-desc" style="font-size: 0.9375rem; color: var(--text-muted);">아직 웨일이 없으시면 먼저 다음 단계에서 다운로드받아주세요.</p>
+          </div>
+          <div class="step-mockup">
+            [모바일 화면 일러스트]<br/>설정 → 추천인 코드<br/>입력 화면 안내
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- step 2: 코드 복사 + 앱 다운로드 -->
+    <section class="scroll-page">
+      <div class="scroll-page-inner" style="text-align: center;">
+        <span class="step-eyebrow">STEP 02</span>
+        <h2 class="step-title">코드 복사<br/>+ 앱 다운로드</h2>
+        <p class="step-desc" style="max-width: 540px; margin: 0 auto;">아래 코드를 복사해서 웨일 앱에 붙여넣어주세요. 아직 앱이 없다면 함께 받으실 수 있어요.</p>
+
+        <div class="code-display">
+          <span class="code-value" id="referral-code">ABCD1234</span>
+          <button class="btn btn-secondary" onclick="copyCode()">복사</button>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: -0.5rem;">복사 버튼을 누르면 클립보드에 저장됩니다</p>
+
+        <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border-light); max-width: 540px; margin-left: auto; margin-right: auto;">
+          <p style="font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.08em; margin-bottom: 1rem;">앱 다운로드</p>
+          <div class="download-row">
+            <a class="btn btn-secondary btn-large" href="https://play.google.com/store/apps/details?id=com.naver.whale" target="_blank" rel="noopener">📱 Google Play</a>
+            <a class="btn btn-secondary btn-large" href="https://apps.apple.com/kr/app/id1468337057" target="_blank" rel="noopener">🍎 App Store</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- step 3: 부스 안내 + 상품 이미지 -->
+    <section class="scroll-page">
+      <div class="scroll-page-inner" style="text-align: center;">
+        <span class="step-eyebrow">STEP 03</span>
+        <h2 class="step-title">부스 방문 + 상품</h2>
+        <p class="step-desc" style="max-width: 540px; margin: 0 auto;">부스에서 코드 등록 인증 후 게임에 참여할 수 있어요.</p>
+
+        <div class="prize-grid">
+          <div class="prize-item">
+            <div class="prize-image" data-prize="keycap">
+              <span class="prize-placeholder">키캡 이미지<br/>(추후 삽입)</span>
+            </div>
+            <div class="prize-name">키캡</div>
+          </div>
+          <div class="prize-item">
+            <div class="prize-image" data-prize="doll">
+              <span class="prize-placeholder">인형 이미지<br/>(추후 삽입)</span>
+            </div>
+            <div class="prize-name">인형</div>
+          </div>
+        </div>
+
+        <div class="booth-notice">
+          <div class="booth-notice-label">참여 안내</div>
+          <p class="booth-notice-body"><strong>참가 시 키캡 또는 인형 택1, 1등 시 둘 다 증정!</strong></p>
+        </div>
+
+        <button class="btn btn-primary btn-large" onclick="showRules()">게임 미리 체험하기 →</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 1-3. GAME RULES (scroll-snap 5페이지) -->
+  <div class="screen scroll-screen" id="screen-rules">
+    <div class="scroll-progress">
+      <div class="scroll-dot active" data-page="0"></div>
+      <div class="scroll-dot" data-page="1"></div>
+      <div class="scroll-dot" data-page="2"></div>
+      <div class="scroll-dot" data-page="3"></div>
+      <div class="scroll-dot" data-page="4"></div>
+    </div>
+
+    <!-- RULE 01: 카드 종류 -->
+    <section class="scroll-page">
+      <div class="scroll-page-inner" style="text-align: center;">
+        <span class="step-eyebrow">RULE 01 · 카드 종류</span>
+        <h2 class="step-title">카드는 6종류</h2>
+        <p class="step-desc">1~5 숫자 카드와 캐릭6(라마) 카드. 마지막에 손에 들고 있으면 그 점수만큼 깎입니다.</p>
+        <div class="rule-cards-display" id="rule-cards-display"></div>
+        <p class="rule-card-note">캐릭6(라마)는 <strong>-8점 폭탄</strong>! 빨리 던지는 게 좋아요</p>
+      </div>
+    </section>
+
+    <!-- RULE 02: 매칭 규칙 -->
+    <section class="scroll-page">
+      <div class="scroll-page-inner" style="text-align: center;">
+        <span class="step-eyebrow">RULE 02 · 매칭 규칙</span>
+        <h2 class="step-title">같은 숫자 또는 +1만</h2>
+        <p class="step-desc">바닥에 놓인 카드와 같은 숫자나 한 칸 위 숫자만 낼 수 있어요.</p>
+        <div class="rule-example">
+          <div class="rule-example-bottom">
+            <span class="small-label">바닥에 캐릭3이 있다면</span>
+            <div id="rule-bottom-card"></div>
+          </div>
+          <div class="rule-example-arrow">↓</div>
+          <div class="rule-example-options">
+            <div class="rule-option-row good">
+              <span class="rule-option-label">✓ 가능</span>
+              <div class="rule-option-cards" id="rule-good-cards"></div>
+            </div>
+            <div class="rule-option-row bad">
+              <span class="rule-option-label">✗ 불가</span>
+              <div class="rule-option-cards" id="rule-bad-cards"></div>
+            </div>
+          </div>
+        </div>
+        <p class="rule-card-note"><strong>5 위에는 캐릭6(라마)</strong>, <strong>캐릭6 위에는 1</strong>만 가능</p>
+      </div>
+    </section>
+
+    <!-- RULE 03: 차례 행동 -->
+    <section class="scroll-page">
+      <div class="scroll-page-inner" style="text-align: center;">
+        <span class="step-eyebrow">RULE 03 · 차례 행동</span>
+        <h2 class="step-title">내 차례에 3가지 선택</h2>
+        <p class="step-desc">매 차례 셋 중 하나를 골라야 해요.</p>
+        <div class="rule-actions-grid">
+          <div class="rule-action-card">
+            <div class="rule-action-icon">①</div>
+            <h3>카드 내기</h3>
+            <p>매칭되는 카드를 골라 바닥에 내기</p>
+          </div>
+          <div class="rule-action-card">
+            <div class="rule-action-icon">②</div>
+            <h3>카드 뽑기</h3>
+            <p>덱에서 1장 뽑고 차례 종료</p>
+          </div>
+          <div class="rule-action-card">
+            <div class="rule-action-icon">③</div>
+            <h3>그만하기</h3>
+            <p>이 라운드 이탈, 손에 든 카드로 점수 확정</p>
+          </div>
+        </div>
+        <p class="rule-card-note">못 내겠으면 <strong>뽑거나 그만하기</strong>를 선택</p>
+      </div>
+    </section>
+
+    <!-- RULE 04: 점수 계산 -->
+    <section class="scroll-page">
+      <div class="scroll-page-inner" style="text-align: center;">
+        <span class="step-eyebrow">RULE 04 · 점수 계산</span>
+        <h2 class="step-title">같은 종류는 한 번만</h2>
+        <p class="step-desc">같은 종류 카드 여러 장이어도 점수는 1번만 차감!</p>
+        <div class="rule-score-example">
+          <div>
+            <span class="small-label">손에 이런 카드가 남았다면</span>
+            <div class="rule-score-cards" id="rule-score-cards"></div>
+          </div>
+          <div class="rule-score-arrow">↓</div>
+          <div class="rule-score-calc">
+            <div class="rule-score-line"><span>캐릭1</span><span>-1</span></div>
+            <div class="rule-score-line"><span>캐릭4</span><span>-4</span></div>
+            <div class="rule-score-line note"><span>↳ 두 장이지만 한 번만</span><span></span></div>
+            <div class="rule-score-line"><span>캐릭6(라마)</span><span>-8</span></div>
+            <div class="rule-score-total"><span>합계</span><span>-13점</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RULE 05: 승리 조건 -->
+    <section class="scroll-page">
+      <div class="scroll-page-inner" style="text-align: center;">
+        <span class="step-eyebrow">RULE 05 · 승리 조건</span>
+        <h2 class="step-title">2라운드 합계 0에 가장 가까우면 승리</h2>
+        <p class="step-desc">총 <strong>2라운드</strong>를 진행해서 누적 점수가 0에 가장 가까운 사람이 1등. 라운드 사이 카드는 새로 분배됩니다.</p>
+        <div class="rule-winner-grid">
+          <div class="rule-mini-result lose">
+            <div class="rule-mini-name">손님</div>
+            <div class="rule-mini-score">-3점</div>
+            <div class="rule-mini-note">R1 -3 + R2 0</div>
+          </div>
+          <div class="rule-mini-result win">
+            <div class="rule-mini-rank">🥇 1등</div>
+            <div class="rule-mini-name">친구1</div>
+            <div class="rule-mini-score">-2점</div>
+            <div class="rule-mini-note">R1 0 + R2 -2</div>
+          </div>
+          <div class="rule-mini-result lose">
+            <div class="rule-mini-name">친구2</div>
+            <div class="rule-mini-score">-10점</div>
+            <div class="rule-mini-note">R1 -8 + R2 -2</div>
+          </div>
+        </div>
+        <div class="rule-prize-note">
+          <strong>1등</strong> = 키캡 + 인형 둘 다<br/>
+          <strong>2~3등</strong> = 키캡 or 인형 (택1)
+        </div>
+        <button class="btn btn-primary btn-large" onclick="startGame()">게임 시작 ▶</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 1-3-1. GAME -->
+  <div class="screen" id="screen-game">
+    <div class="game-page">
+      <div class="game-header">
+        <div class="game-header-left">
+          <span class="game-round-pill">ROUND <span id="game-round-num">1</span> / <span id="game-round-total">2</span></span>
+          <h1 class="game-title">웨일프렌즈와 한 판</h1>
+        </div>
+        <div class="turn-indicator" id="turn-indicator">대기 중</div>
+      </div>
+      <div class="game-cumulative-strip" id="game-cumulative-strip"></div>
+      <div class="game-board">
+        <div class="npc-area" id="npc-area"></div>
+
+        <div class="center-area">
+          <div class="deck-slot">
+            <div class="deck-label">덱 <span class="count" id="deck-count">0</span>장</div>
+            <div class="card large back"></div>
+          </div>
+          <div class="deck-slot">
+            <div class="deck-label">바닥 카드</div>
+            <div id="top-card"></div>
+          </div>
+        </div>
+
+        <div class="player-area">
+          <div class="player-badge active" id="player-badge"><span>손님</span><span class="count">4장</span></div>
+          <div class="player-cards" id="player-cards"></div>
+          <div class="game-actions">
+            <button class="btn btn-secondary" id="btn-draw" onclick="onPlayerDraw()">카드 뽑기</button>
+            <button class="btn btn-secondary" id="btn-quit" onclick="onPlayerQuit()">그만하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1-3-2. ROUND RESULT (라운드 중간 결과) -->
+  <div class="screen" id="screen-round-result">
+    <div class="round-result-page">
+      <span class="step-eyebrow">ROUND <span id="round-result-num">1</span> / <span id="round-result-total">2</span> 종료</span>
+      <h1 class="page-title">라운드 결과</h1>
+
+      <div class="round-section">
+        <div class="round-section-label">이번 라운드 점수</div>
+        <div class="round-score-list" id="round-score-this"></div>
+      </div>
+
+      <div class="round-result-actions">
+        <button class="btn btn-primary btn-large" onclick="nextRound()">다음 라운드 ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1-3-3. RESULT (최종 결과) -->
+  <div class="screen" id="screen-result">
+    <div class="result-page">
+      <h1 class="result-title" id="result-title">결과</h1>
+      <p class="result-prize" id="result-prize"></p>
+      <div class="result-board" id="result-board"></div>
+      <div class="result-actions">
+        <button class="btn btn-secondary" onclick="showScreen('landing')">홈으로</button>
+        <button class="btn btn-primary btn-large" onclick="showRules()">한 번 더 ▶</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============================================
+  // CONFIG
+  // ============================================
+  const CARD_TYPES = [
+    { id: 1, value: 1, points: 1, name: '캐릭1' },
+    { id: 2, value: 2, points: 2, name: '캐릭2' },
+    { id: 3, value: 3, points: 3, name: '캐릭3' },
+    { id: 4, value: 4, points: 4, name: '캐릭4' },
+    { id: 5, value: 5, points: 5, name: '캐릭5' }
+  ];
+  const LLAMA_CARD = { id: 'L', value: 'LLAMA', points: 8, name: '캐릭6', isLlama: true };
+
+  const REFERRAL_CODE = 'ABCD1234'; // 실제 코드로 교체 필요
+
+  const CONFIG = {
+    copiesPerNumber: 6,
+    copiesLlama: 6,
+    handSize: 5,
+    npcThinkDelay: 1100,
+    totalRounds: 2,
+    npcs: [{ name: '친구1' }, { name: '친구2' }]
+  };
+
+  let game = null;
+
+  // ============================================
+  // GAME LOGIC
+  // ============================================
+  function createDeck() {
+    const deck = [];
+    let uid = 0;
+    for (const c of CARD_TYPES) {
+      for (let i = 0; i < CONFIG.copiesPerNumber; i++) deck.push({ ...c, uid: uid++ });
+    }
+    for (let i = 0; i < CONFIG.copiesLlama; i++) deck.push({ ...LLAMA_CARD, uid: uid++ });
+    return deck;
+  }
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function canPlay(card, top) {
+    if (!top) return true;
+    if (card.value === top.value) return true;
+    if (typeof top.value === 'number' && typeof card.value === 'number' && card.value === top.value + 1) return true;
+    if (top.value === 5 && card.value === 'LLAMA') return true;
+    if (top.value === 'LLAMA' && card.value === 1) return true;
+    return false;
+  }
+
+  function calculateScore(hand) {
+    const seen = new Map();
+    for (const c of hand) {
+      if (!seen.has(c.value)) seen.set(c.value, c.points);
+    }
+    let total = 0;
+    for (const p of seen.values()) total += p;
+    return total;
+  }
+
+  function formatScore(p) {
+    return p === 0 ? '0' : '-' + p;
+  }
+
+  function startGame() {
+    const players = [{ name: '손님', hand: [], quitted: false, isPlayer: true }];
+    for (const npc of CONFIG.npcs) {
+      players.push({ name: npc.name, hand: [], quitted: false, isPlayer: false });
+    }
+    // 누적 점수 / 라운드별 점수 히스토리 초기화
+    const totalScores = {};
+    players.forEach(p => { totalScores[p.name] = 0; });
+
+    game = {
+      players,
+      deck: [],
+      top: null,
+      currentTurn: 0,
+      phase: 'playing',
+      round: 1,
+      totalRounds: CONFIG.totalRounds,
+      totalScores,            // { name: 누적 점수 }
+      roundHistory: []        // [{ round: 1, scores: [{name, score}, ...] }, ...]
+    };
+
+    dealNewRound(); // 1라운드 카드 분배
+    showScreen('game');
+    renderGame();
+  }
+
+  // 라운드 카드 분배 (1라운드, 2라운드 공통)
+  function dealNewRound() {
+    const deck = shuffle(createDeck());
+    game.players.forEach(p => {
+      p.hand = [];
+      p.quitted = false;
+    });
+    for (let i = 0; i < CONFIG.handSize; i++) {
+      for (const p of game.players) p.hand.push(deck.pop());
+    }
+    game.top = deck.pop();
+    game.deck = deck;
+    game.currentTurn = 0;
+    game.phase = 'playing';
+  }
+
+  function nextRound() {
+    game.round++;
+    dealNewRound();
+    showScreen('game');
+    renderGame();
+  }
+
+  function onPlayerPlayCard(handIdx) {
+    if (game.phase !== 'playing' || game.currentTurn !== 0) return;
+    const player = game.players[0];
+    const card = player.hand[handIdx];
+    if (!canPlay(card, game.top)) return;
+
+    player.hand.splice(handIdx, 1);
+    game.top = card;
+
+    if (player.hand.length === 0) { endRound(); return; }
+    nextTurn();
+  }
+
+  function onPlayerDraw() {
+    if (game.phase !== 'playing' || game.currentTurn !== 0) return;
+    if (game.deck.length === 0) { onPlayerQuit(); return; }
+    game.players[0].hand.push(game.deck.pop());
+    nextTurn();
+  }
+
+  function onPlayerQuit() {
+    if (game.phase !== 'playing' || game.currentTurn !== 0) return;
+    game.players[0].quitted = true;
+    nextTurn();
+  }
+
+  function nextTurn() {
+    if (checkRoundEnd()) { endRound(); return; }
+    let next = (game.currentTurn + 1) % game.players.length;
+    let safety = 0;
+    while (game.players[next].quitted && safety < game.players.length * 2) {
+      next = (next + 1) % game.players.length;
+      safety++;
+    }
+    game.currentTurn = next;
+    renderGame();
+    const cur = game.players[next];
+    if (!cur.isPlayer && !cur.quitted && game.phase === 'playing') {
+      setTimeout(() => npcTurn(next), CONFIG.npcThinkDelay);
+    }
+  }
+
+  function npcTurn(idx) {
+    if (game.phase !== 'playing') return;
+    const npc = game.players[idx];
+    if (npc.quitted) { nextTurn(); return; }
+
+    const playable = npc.hand.map((c, i) => ({ c, i })).filter(x => canPlay(x.c, game.top));
+
+    if (playable.length > 0) {
+      playable.sort((a, b) => b.c.points - a.c.points);
+      const { c: card, i: handIdx } = playable[0];
+      npc.hand.splice(handIdx, 1);
+      game.top = card;
+      if (npc.hand.length === 0) { endRound(); return; }
+      nextTurn();
+    } else {
+      const score = calculateScore(npc.hand);
+      const hasLlama = npc.hand.some(c => c.value === 'LLAMA');
+      const shouldQuit = (hasLlama && npc.hand.length >= 3) || score >= 6 || game.deck.length === 0;
+      if (shouldQuit) {
+        npc.quitted = true;
+      } else {
+        npc.hand.push(game.deck.pop());
+      }
+      nextTurn();
+    }
+  }
+
+  function checkRoundEnd() {
+    const someoneEmpty = game.players.some(p => p.hand.length === 0 && !p.quitted);
+    if (someoneEmpty) return true;
+    const active = game.players.filter(p => !p.quitted);
+    if (active.length === 0) return true;
+    if (active.length === 1) {
+      const last = active[0];
+      const canDoAnything = last.hand.some(c => canPlay(c, game.top)) || game.deck.length > 0;
+      if (!canDoAnything) return true;
+    }
+    return false;
+  }
+
+  function endRound() {
+    game.phase = 'roundEnded';
+    // 이번 라운드 점수 계산 (양수, 표시할 때 -붙임)
+    const roundScores = game.players.map(p => ({
+      name: p.name,
+      isPlayer: p.isPlayer,
+      hand: [...p.hand],
+      score: p.hand.length === 0 ? 0 : calculateScore(p.hand),
+      quitted: p.quitted
+    }));
+
+    // 누적 점수 업데이트
+    roundScores.forEach(r => {
+      game.totalScores[r.name] += r.score;
+    });
+
+    // 히스토리 저장
+    game.roundHistory.push({
+      round: game.round,
+      scores: roundScores.map(r => ({ name: r.name, score: r.score, hand: r.hand }))
+    });
+
+    if (game.round < game.totalRounds) {
+      // 라운드 중간 결과
+      showRoundResult();
+    } else {
+      // 최종 결과 (누적 점수 기준)
+      showFinalResult();
+    }
+  }
+
+  function showRoundResult() {
+    const lastRound = game.roundHistory[game.roundHistory.length - 1];
+
+    // 라운드 헤더
+    document.getElementById('round-result-num').textContent = lastRound.round;
+    document.getElementById('round-result-total').textContent = game.totalRounds;
+
+    // 이번 라운드 점수만 표시
+    const thisList = document.getElementById('round-score-this');
+    thisList.innerHTML = '';
+    lastRound.scores.forEach(s => {
+      const isPlayer = game.players.find(p => p.name === s.name).isPlayer;
+      thisList.appendChild(buildRoundScoreCell(s.name, s.score, isPlayer));
+    });
+
+    showScreen('round-result');
+  }
+
+  function buildRoundScoreCell(name, score, isPlayer) {
+    const div = document.createElement('div');
+    div.className = 'round-score-row' + (isPlayer ? ' you' : '');
+    div.innerHTML = `
+      <div class="round-score-name">${name}${isPlayer ? '<span class="round-score-tag">나</span>' : ''}</div>
+      <div class="round-score-value ${score === 0 ? 'zero' : ''}">${formatScore(score)}점</div>
+    `;
+    return div;
+  }
+
+  function showFinalResult() {
+    // 누적 점수 기반 최종 결과
+    const finalResults = game.players.map(p => {
+      const breakdown = game.roundHistory.map(rh => {
+        const s = rh.scores.find(x => x.name === p.name);
+        return s ? s.score : 0;
+      });
+      return {
+        name: p.name,
+        isPlayer: p.isPlayer,
+        score: game.totalScores[p.name],
+        breakdown,           // 라운드별 점수 [r1, r2]
+        hand: []             // 최종에선 손패 표시 안 함 (라운드별 카드는 breakdown으로)
+      };
+    });
+    showResult(finalResults);
+  }
+
+  // ============================================
+  // RENDER
+  // ============================================
+  function renderGame() {
+    if (!game) return;
+
+    // 라운드 정보
+    const roundNumEl = document.getElementById('game-round-num');
+    const roundTotalEl = document.getElementById('game-round-total');
+    if (roundNumEl) roundNumEl.textContent = game.round;
+    if (roundTotalEl) roundTotalEl.textContent = game.totalRounds;
+
+    // 누적 점수 strip (라운드 2 이상에서만 표시)
+    const cumStrip = document.getElementById('game-cumulative-strip');
+    if (cumStrip) {
+      if (game.round > 1) {
+        const cells = game.players.map(p => {
+          const score = game.totalScores[p.name];
+          const tag = p.isPlayer ? '<span class="cum-strip-you">나</span>' : '';
+          return `<div class="cum-strip-cell ${p.isPlayer ? 'you' : ''}">
+            <span class="cum-strip-name">${p.name}${tag}</span>
+            <span class="cum-strip-score ${score === 0 ? 'zero' : ''}">${formatScore(score)}점</span>
+          </div>`;
+        }).join('');
+        cumStrip.innerHTML = `<span class="cum-strip-label">누적</span>${cells}`;
+        cumStrip.style.display = '';
+      } else {
+        cumStrip.style.display = 'none';
+      }
+    }
+
+    document.getElementById('deck-count').textContent = game.deck.length;
+    document.getElementById('top-card').innerHTML = renderCardHTML(game.top, 'large');
+
+    const npcArea = document.getElementById('npc-area');
+    npcArea.innerHTML = '';
+    for (let i = 1; i < game.players.length; i++) {
+      const npc = game.players[i];
+      const isActive = game.currentTurn === i && !npc.quitted && game.phase === 'playing';
+      const div = document.createElement('div');
+      div.className = 'npc';
+      const badgeClass = npc.quitted ? 'quitted' : (isActive ? 'active' : '');
+      div.innerHTML = `
+        <div class="npc-badge ${badgeClass}">
+          <span>${npc.name}${npc.quitted ? ' (그만)' : ''}</span>
+          <span class="count">${npc.hand.length}장</span>
+        </div>
+        <div class="npc-cards">
+          ${npc.hand.map(() => '<div class="card mini back"></div>').join('')}
+        </div>
+      `;
+      npcArea.appendChild(div);
+    }
+
+    const player = game.players[0];
+    const isPlayerTurn = game.currentTurn === 0 && !player.quitted && game.phase === 'playing';
+    const playerBadge = document.getElementById('player-badge');
+    playerBadge.className = 'player-badge ' + (player.quitted ? 'quitted' : (isPlayerTurn ? 'active' : ''));
+    playerBadge.innerHTML = `<span>${player.name}${player.quitted ? ' (그만)' : ''}</span><span class="count">${player.hand.length}장</span>`;
+
+    const playerCards = document.getElementById('player-cards');
+    playerCards.innerHTML = '';
+    if (player.hand.length === 0) {
+      playerCards.innerHTML = '<div class="player-empty">손에 카드 없음</div>';
+    } else {
+      player.hand.forEach((card, idx) => {
+        const playable = isPlayerTurn && canPlay(card, game.top);
+        const cardEl = makeCardEl(card, 'large', playable);
+        if (playable) cardEl.onclick = () => onPlayerPlayCard(idx);
+        if (isPlayerTurn && !playable) cardEl.classList.add('disabled');
+        playerCards.appendChild(cardEl);
+      });
+    }
+
+    document.getElementById('btn-draw').disabled = !isPlayerTurn;
+    document.getElementById('btn-quit').disabled = !isPlayerTurn;
+    document.getElementById('btn-draw').textContent = (isPlayerTurn && game.deck.length === 0) ? '덱 비어있음' : '카드 뽑기';
+
+    const turnEl = document.getElementById('turn-indicator');
+    if (game.phase === 'ended') {
+      turnEl.textContent = '게임 종료';
+      turnEl.className = 'turn-indicator ended';
+    } else {
+      const cur = game.players[game.currentTurn];
+      turnEl.textContent = `${cur.name} 차례`;
+      turnEl.className = 'turn-indicator' + (cur.isPlayer ? ' active' : '');
+    }
+  }
+
+  function makeCardEl(card, size, playable) {
+    const isLlama = card.value === 'LLAMA';
+    const valueDisplay = isLlama ? 'L' : card.value;
+    const div = document.createElement('div');
+    div.className = `card ${size}` + (isLlama ? ' llama' : '') + (playable ? ' playable' : '');
+    div.innerHTML = `
+      <div class="card-value-top">${valueDisplay}</div>
+      <div class="card-name">${card.name}</div>
+      <div class="card-value-bottom">${valueDisplay}</div>
+    `;
+    return div;
+  }
+
+  function renderCardHTML(card, size) {
+    if (!card) return '';
+    const isLlama = card.value === 'LLAMA';
+    const valueDisplay = isLlama ? 'L' : card.value;
+    const cls = `card ${size || ''}` + (isLlama ? ' llama' : '');
+    return `<div class="${cls}">
+      <div class="card-value-top">${valueDisplay}</div>
+      <div class="card-name">${card.name}</div>
+      <div class="card-value-bottom">${valueDisplay}</div>
+    </div>`;
+  }
+
+  function showResult(results) {
+    // 점수 오름차순 정렬 (낮은 점수 = 1등)
+    const sorted = [...results].sort((a, b) => a.score - b.score);
+
+    // 등수 계산 (동점 처리: 같은 점수면 같은 등수)
+    let prevScore = null;
+    let prevRank = 0;
+    sorted.forEach((r, i) => {
+      if (r.score !== prevScore) {
+        r.rank = i + 1;
+        prevScore = r.score;
+        prevRank = r.rank;
+      } else {
+        r.rank = prevRank;
+      }
+    });
+
+    const playerResult = sorted.find(r => r.isPlayer);
+    const won = playerResult.rank === 1;
+
+    const titleEl = document.getElementById('result-title');
+    titleEl.textContent = won ? '1등 승리!' : `${playerResult.rank}등`;
+    titleEl.className = 'result-title ' + (won ? 'win' : '');
+
+    const prizeEl = document.getElementById('result-prize');
+    prizeEl.textContent = won ? '키캡 + 인형 둘 다 받으세요!' : '키캡 or 인형 (택1)';
+    prizeEl.className = 'result-prize ' + (won ? 'win' : '');
+
+    const board = document.getElementById('result-board');
+    board.innerHTML = '';
+
+    // 등수 순으로 표시 (1등 → 2등 → 3등)
+    sorted.forEach(r => {
+      const div = document.createElement('div');
+      let cls = 'result-player';
+      if (r.rank === 1) cls += ' winner';
+      if (r.isPlayer) cls += ' you';
+      div.className = cls;
+
+      const rankLabel = r.rank === 1 ? '🥇 1등' : (r.rank === 2 ? '🥈 2등' : '🥉 3등');
+      const rankClass = `rank-${r.rank}`;
+
+      // 라운드별 breakdown HTML (있을 경우)
+      let breakdownHTML = '';
+      if (r.breakdown && r.breakdown.length > 0) {
+        const cells = r.breakdown.map((s, i) => `
+          <div class="result-rounds-cell">
+            <div class="result-rounds-label">R${i + 1}</div>
+            <div class="result-rounds-value">${formatScore(s)}</div>
+          </div>
+        `).join('');
+        breakdownHTML = `<div class="result-rounds">${cells}</div>`;
+      } else if (r.hand && r.hand.length > 0) {
+        breakdownHTML = `<div class="result-cards">${r.hand.map(c => renderCardHTML(c, 'mini')).join('')}</div>`;
+      } else {
+        breakdownHTML = `<div class="result-cards"><div class="result-empty">카드 다 냄</div></div>`;
+      }
+
+      div.innerHTML = `
+        <div class="rank-badge ${rankClass}">${rankLabel}</div>
+        <div class="result-player-name">
+          ${r.name}${r.isPlayer ? '<span class="result-player-name-tag">나</span>' : ''}
+        </div>
+        ${breakdownHTML}
+        <div class="result-score-block">
+          <div class="result-score ${r.score === 0 ? 'zero' : ''}">${formatScore(r.score)}</div>
+          <div class="result-score-label">${r.breakdown ? '누적' : ''} 점</div>
+        </div>
+      `;
+      board.appendChild(div);
+    });
+
+    showScreen('result');
+  }
+
+  // ============================================
+  // NAVIGATION
+  // ============================================
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('screen-' + name);
+    if (target) target.classList.add('active');
+    setActiveNav(name);
+    // 스크롤 컨테이너 진입 시 맨 위로
+    if (name === 'conditions') {
+      const sc = document.getElementById('screen-conditions');
+      sc.scrollTop = 0;
+      updateScrollProgress('screen-conditions', 0);
+    }
+    if (name === 'rules') {
+      const sc = document.getElementById('screen-rules');
+      sc.scrollTop = 0;
+      updateScrollProgress('screen-rules', 0);
+    }
+    // 슬라이드쇼 제어: 랜딩이면 첫 슬라이드부터 자동 재생, 그 외엔 정지
+    if (name === 'landing') {
+      const slides = document.querySelectorAll('#screen-landing .slide');
+      slides.forEach((s, i) => s.classList.toggle('active', i === 0));
+      currentSlideIndex = 0;
+      patternIndex = 0;
+      startSlideshow();
+    } else {
+      stopSlideshow();
+    }
+    window.scrollTo(0, 0);
+  }
+
+  function showRules() {
+    showScreen('rules');
+    renderRulePages();
+    setActiveNav('rules');
+  }
+
+  function setActiveNav(name) {
+    // 헤더 네비가 없어졌지만 함수는 유지 (data-screen이 있는 다른 곳 영향 없음)
+    document.querySelectorAll('[data-screen]').forEach(b => {
+      const matches = b.dataset.screen === name || (name === 'rules' && b.dataset.screen === 'rules') || (name === 'game' && b.dataset.screen === 'rules') || (name === 'result' && b.dataset.screen === 'rules');
+      b.classList.toggle('active', matches);
+    });
+  }
+
+  // ============================================
+  // 게임 룰 페이지 시각 예시 동적 렌더
+  // ============================================
+  function renderRulePages() {
+    // RULE 01: 카드 6장 + 점수 표시
+    const card1Container = document.getElementById('rule-cards-display');
+    if (card1Container) {
+      let html = '';
+      for (const c of CARD_TYPES) {
+        html += `<div class="rule-card-with-points">${renderCardHTML(c, 'large')}<div class="rule-card-points">-${c.points}점</div></div>`;
+      }
+      html += `<div class="rule-card-with-points">${renderCardHTML(LLAMA_CARD, 'large')}<div class="rule-card-points llama">-${LLAMA_CARD.points}점</div></div>`;
+      card1Container.innerHTML = html;
+    }
+
+    // RULE 02: 매칭 규칙 예시 (바닥 = 캐릭3)
+    const bottomCard = document.getElementById('rule-bottom-card');
+    if (bottomCard) {
+      bottomCard.innerHTML = renderCardHTML(CARD_TYPES[2], 'large'); // 캐릭3
+    }
+    const goodCards = document.getElementById('rule-good-cards');
+    if (goodCards) {
+      // 가능: 캐릭3 (같은), 캐릭4 (+1)
+      goodCards.innerHTML =
+        renderCardHTML(CARD_TYPES[2]) + renderCardHTML(CARD_TYPES[3]);
+    }
+    const badCards = document.getElementById('rule-bad-cards');
+    if (badCards) {
+      // 불가: 캐릭1, 캐릭2, 캐릭5 (라마는 5 위에서만 가능하니 여기서 불가)
+      badCards.innerHTML =
+        renderCardHTML(CARD_TYPES[0]).replace('class="card', 'class="card faded') +
+        renderCardHTML(CARD_TYPES[1]).replace('class="card', 'class="card faded') +
+        renderCardHTML(CARD_TYPES[4]).replace('class="card', 'class="card faded');
+    }
+
+    // RULE 04: 점수 계산 예시 (1, 4, 4, 라마)
+    const scoreCards = document.getElementById('rule-score-cards');
+    if (scoreCards) {
+      scoreCards.innerHTML =
+        renderCardHTML(CARD_TYPES[0]) +     // 1
+        renderCardHTML(CARD_TYPES[3]) +     // 4
+        renderCardHTML(CARD_TYPES[3]) +     // 4 중복
+        renderCardHTML(LLAMA_CARD);         // 라마
+    }
+  }
+
+  // ============================================
+  // SCROLL PROGRESS (참가 방법 + 게임 룰 공통)
+  // ============================================
+  function setupScrollProgress(screenId) {
+    const container = document.getElementById(screenId);
+    if (!container) return;
+    const dots = container.querySelectorAll('.scroll-dot');
+    const pages = container.querySelectorAll('.scroll-page');
+
+    container.addEventListener('scroll', () => {
+      const idx = Math.round(container.scrollTop / container.clientHeight);
+      updateScrollProgress(screenId, idx);
+    });
+
+    dots.forEach((dot, i) => {
+      dot.addEventListener('click', () => {
+        pages[i].scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  }
+
+  function updateScrollProgress(screenId, idx) {
+    const dots = document.querySelectorAll(`#${screenId} .scroll-dot`);
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  }
+
+  // ============================================
+  // COPY CODE
+  // ============================================
+  function copyCode() {
+    const code = REFERRAL_CODE;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(() => showToast('코드가 복사되었어요!')).catch(() => showToast('복사 실패. 직접 입력해주세요.'));
+    } else {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = code; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); showToast('코드가 복사되었어요!'); } catch (e) { showToast('복사 실패'); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  // ============================================
+  // SLIDESHOW (랜딩 자동 슬라이드)
+  // 패턴: 참가(0) → 차별점N → 게임시작(5) → 참가(0) → 차별점N+1 → 게임시작(5) → ...
+  // ============================================
+  const SLIDE_DURATION = 6000; // 각 슬라이드 6초
+  const slidePattern = [0, 1, 5, 0, 2, 5, 0, 3, 5, 0, 4, 5];
+  // 0=참가방법, 1=사이드바, 2=웨일스페이스, 3=웨일온, 4=그린드랍, 5=게임시작
+  let slideshowTimer = null;
+  let currentSlideIndex = 0;
+  let patternIndex = 0;
+
+  function startSlideshow() {
+    stopSlideshow();
+    slideshowTimer = setInterval(() => {
+      patternIndex = (patternIndex + 1) % slidePattern.length;
+      goToSlide(slidePattern[patternIndex], true);
+    }, SLIDE_DURATION);
+  }
+
+  function stopSlideshow() {
+    if (slideshowTimer) {
+      clearInterval(slideshowTimer);
+      slideshowTimer = null;
+    }
+  }
+
+  function goToSlide(idx, fromTimer = false) {
+    const slides = document.querySelectorAll('#screen-landing .slide');
+    if (slides.length === 0) return;
+    slides[currentSlideIndex].classList.remove('active');
+    currentSlideIndex = idx;
+    slides[idx].classList.add('active');
+    // 사용자 액션이면 패턴 인덱스 동기화 + 타이머 리셋
+    if (!fromTimer) {
+      const found = slidePattern.indexOf(idx);
+      if (found >= 0) patternIndex = found;
+      startSlideshow();
+    }
+  }
+
+  function renderSlideGameCards() {
+    const container = document.getElementById('slide-game-cards');
+    if (!container) return;
+    let html = '';
+    // 1~5 숫자 카드 + 라마 미리보기
+    for (const c of CARD_TYPES) html += renderCardHTML(c, 'large');
+    html += renderCardHTML(LLAMA_CARD, 'large');
+    container.innerHTML = html;
+  }
+
+  // ============================================
+  // KEYBOARD SHORTCUTS (운영진용 — 화면에 표시되지 않음)
+  //   1 / H : 홈
+  //   2     : 참가 방법
+  //   3     : 차별점
+  //   4     : 게임 룰
+  //   Esc   : 홈으로 (게임 중일 때는 무시)
+  // ============================================
+  document.addEventListener('keydown', (e) => {
+    // 게임 진행 중이면 단축키 비활성화 (실수로 화면 전환 방지)
+    if (game && game.phase === 'playing') return;
+    // 텍스트 입력 중이면 무시
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    const key = e.key.toLowerCase();
+    if (key === '1' || key === 'h') { e.preventDefault(); showScreen('landing'); }
+    else if (key === '2') { e.preventDefault(); showScreen('conditions'); }
+    else if (key === '3') {
+      // 차별점은 별도 페이지가 없으므로 랜딩의 슬라이드 2로 점프 후 자동 정지
+      e.preventDefault();
+      showScreen('landing');
+      setTimeout(() => { goToSlide(1); stopSlideshow(); }, 50);
+    }
+    else if (key === '4') { e.preventDefault(); showRules(); }
+    else if (key === 'enter') {
+      // 게임 시작 슬라이드(5)로 점프 → 1초 후 룰 페이지로 자동 진입
+      e.preventDefault();
+      showScreen('landing');
+      setTimeout(() => {
+        goToSlide(5, true);
+        stopSlideshow();
+        setTimeout(showRules, 1000);
+      }, 50);
+    }
+    else if (key === 'escape') { e.preventDefault(); showScreen('landing'); }
+  });
+
+  // ============================================
+  // INIT
+  // ============================================
+  document.addEventListener('DOMContentLoaded', () => {
+    setupScrollProgress('screen-conditions');
+    setupScrollProgress('screen-rules');
+    renderSlideGameCards();
+    startSlideshow(); // 페이지 로드 시 자동 슬라이드 시작
+  });
+</script>
+</body>
+</html>
