@@ -39,6 +39,11 @@ yarn-error.log*
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+# service account 키 — 절대 커밋 금지
+firebase-adminsdk-*.json
+*-service-account.json
+service-account*.json
+gcloud-key*.json
 
 # original prototype assets (keep but don't ship)
 asset/
