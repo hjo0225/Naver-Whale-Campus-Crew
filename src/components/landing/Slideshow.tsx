@@ -160,12 +160,20 @@ function GameStartSlide() {
           <Card key={String(c.id)} card={c} size="large" />
         ))}
       </div>
-      <Link
-        href="/rules/"
-        className="cta-btn cta-btn-primary cta-btn-pill !bg-white !text-(--color-brand-deep)"
-      >
-        게임 시작 ▶
-      </Link>
+      <div className="flex flex-col items-center gap-3">
+        <Link
+          href="/rules/"
+          className="cta-btn cta-btn-primary cta-btn-pill !bg-white !text-(--color-brand-deep)"
+        >
+          싱글 플레이 ▶
+        </Link>
+        <Link
+          href="/game/pvp/"
+          className="cta-btn cta-btn-pill !bg-(--color-brand-cyan) !text-white"
+        >
+          🤝 PvP 대전 (노트북 2대)
+        </Link>
+      </div>
     </div>
   );
 }

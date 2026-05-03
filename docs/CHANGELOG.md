@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+### Added (2026-05-03 — PvP 모드, ADR-0004)
+- PvP 라우트 `/game/pvp/` — 사람 2 + NPC 2 (HYLION 제외, 달토/페포 2명).
+- 통신: Firebase Realtime Database (Spark 무료 한도 내). `firebase` 패키지 추가.
+- 매칭: 4자리 방 코드 (32자 알파벳, 0/O/1/I 제외). `runTransaction`으로 코드/슬롯 점유.
+- 호스트 권한: NPC 의사결정 + 액션 큐 consume + state 단일 출처. 호스트 disconnect → abort.
+- 가시성: 자기 손패만 앞면, 상대 사람 + NPC 2 모두 뒷면.
+- 사이드바 토글 + 뽑기/그만두기 버튼 보드 외부 분리 (`.pvp-sidebar.collapsed`, `.pvp-action-bar`).
+- 결과 화면 + 운영진 "다음 게임" 버튼 (방 정리 → 양쪽 lobby 복귀).
+- presence onDisconnect + 30초 grace abort.
+- 신규 파일: `src/lib/pvp/{rtdb,roomCode,schema,engine}.ts`, `src/lib/store/pvpStore.ts`, `src/components/game/pvp/{PvpScreen,PvpLobby,PvpWaitingRoom,PvpBoard,PvpResultScreen}.tsx`, `src/lib/game/scoring.ts`, `database.rules.json`, `.env.local.example`, `docs/adr/0004-pvp-rtdb.md`.
+- 단위 테스트: `src/lib/game/__tests__/pvpEngine.test.ts`.
+- 랜딩 마지막 슬라이드에 "PvP 대전" 진입 버튼.
+
 ### Added
 - Next.js 15 App Router + TypeScript 정적 익스포트 셋업
 - v6 HTML의 게임 룰을 `src/lib/game/{rules,deck,npcAi}.ts`로 포팅

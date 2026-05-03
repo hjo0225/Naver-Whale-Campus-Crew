@@ -5,6 +5,7 @@ import { CONFIG, TOTAL_ROUNDS } from "@/lib/game/data";
 import { createDeck, shuffle } from "@/lib/game/deck";
 import { decideNpcMove } from "@/lib/game/npcAi";
 import { canPlay, calculateScore } from "@/lib/game/rules";
+import { assignPlaces, summarize } from "@/lib/game/scoring";
 import type {
   Card,
   GameState,
@@ -69,47 +70,8 @@ function dealNewRound(state: GameState): GameState {
   };
 }
 
-/**
- * 4인전 등수 계산. 동점은 손님이 더 높은 등수 (부스 우호).
- * 손님보다 엄격히 점수 낮은 사람 수 + 1 = 손님 등수.
- * NPC끼리는 단순 정렬.
- */
-function assignPlaces(
-  rows: { name: string; isPlayer: boolean; score: number }[]
-): Map<string, number> {
-  const player = rows.find((r) => r.isPlayer);
-  const playerScore = player?.score ?? 0;
-  // 손님 먼저 등수 매김 (동점 시 손님이 위)
-  const playerPlace = rows.filter((r) => !r.isPlayer && r.score < playerScore).length + 1;
-
-  // NPC 등수: 손님 등수를 비워두고 NPC끼리 점수 오름차순으로 배치
-  const npcs = rows
-    .filter((r) => !r.isPlayer)
-    .map((r) => ({ ...r }))
-    .sort((a, b) => a.score - b.score);
-
-  const places = new Map<string, number>();
-  if (player) places.set(player.name, playerPlace);
-
-  let cur = 1;
-  for (const npc of npcs) {
-    if (cur === playerPlace) cur++;
-    places.set(npc.name, cur);
-    cur++;
-  }
-  return places;
-}
-
-function summarize(history: readonly RoundHistoryEntry[]): PlayerSummary {
-  const last = history[history.length - 1];
-  const totalPlayers = last?.scores.length ?? 4;
-  const place = last?.playerPlace ?? totalPlayers;
-  let prize: PlayerSummary["prize"];
-  if (place === 1) prize = "both";
-  else if (place === totalPlayers) prize = "cheer";
-  else prize = "one";
-  return { place, totalPlayers, prize };
-}
+// 등수/상품 계산은 lib/game/scoring 으로 추출됨 (PvP와 공유).
+// solo 동작 유지: assignPlaces가 사람 1명일 때 기존 부스 우호 룰을 그대로 적용.
 
 /** 손님 첫 턴인지 판단 — 양쪽 모두 lastAction이 null이고 phase=playing. */
 export function isPlayerFirstTurn(state: GameState | null): boolean {

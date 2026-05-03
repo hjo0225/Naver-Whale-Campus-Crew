@@ -11,11 +11,12 @@
     "test": "vitest --config config/vitest.config.ts",
     "test:run": "vitest run --config config/vitest.config.ts",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" --config config/.prettierrc.json",
-    "deploy": "next build && firebase --config config/firebase.json --project naver-whale-campus-crew deploy --only hosting"
+    "deploy": "next build && firebase --project naver-whale-campus-crew deploy --only hosting"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.12.1",
     "framer-motion": "^11.11.17",
     "next": "15.0.3",
     "react": "19.0.0",

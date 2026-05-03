@@ -1498,4 +1498,55 @@
       opacity: 1;
     }
   }
+
+  /* ===== PvP 모드 전용 ===== */
+
+  .pvp-sidebar {
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .pvp-sidebar.collapsed {
+    width: 2.5rem;
+    overflow: hidden;
+  }
+  .pvp-sidebar.collapsed .sidebar-header,
+  .pvp-sidebar.collapsed .sidebar-players {
+    display: none;
+  }
+
+  .pvp-sidebar-toggle {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--color-action);
+    color: white;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+  .pvp-sidebar.collapsed .pvp-sidebar-toggle {
+    right: 0.4rem;
+  }
+
+  .pvp-action-bar {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 20;
+  }
+  .pvp-action-bar .cta-btn {
+    min-width: 10rem;
+  }
 }

@@ -7,7 +7,8 @@
       "Bash(curl *)",
       "Bash(mkdir -p \"/c/Users/ABC/Desktop/Project/네이버웨일 캠퍼스크루/scripts\")",
       "Bash(mkdir -p \"/c/Users/ABC/Desktop/Project/네이버웨일 캠퍼스크루/screenshots\")",
-      "Bash(node scripts/capture.mjs)"
+      "Bash(node scripts/capture.mjs)",
+      "Bash(firebase *)"
     ]
   }
 }
