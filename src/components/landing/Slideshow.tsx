@@ -68,12 +68,9 @@ function QRPanel() {
     <div className="flex items-center justify-center">
       <div className="w-[320px] h-[320px] bg-white rounded-3xl flex items-center justify-center overflow-hidden shadow-[0_16px_48px_rgba(0,22,60,0.3)]">
         <img
-          src="/qr.png"
+          src="/qr.png?v=1"
           alt="부스 QR 코드"
           className="w-full h-full object-contain p-4"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
         />
       </div>
     </div>

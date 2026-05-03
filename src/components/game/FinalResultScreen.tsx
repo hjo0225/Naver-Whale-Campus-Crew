@@ -128,12 +128,9 @@ export function FinalResultScreen() {
         <div className="surface-card brand max-w-[520px] mx-auto mb-8 px-6 py-6 flex items-center gap-5">
           <div className="w-28 h-28 bg-white rounded-2xl shrink-0 overflow-hidden flex items-center justify-center">
             <img
-              src="/qr.png"
+              src="/qr.png?v=1"
               alt="재도전 QR 코드"
               className="w-full h-full object-contain p-1.5"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
             />
           </div>
           <div className="text-left">
