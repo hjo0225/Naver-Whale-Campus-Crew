@@ -4,7 +4,7 @@ import { CHAR_IMAGES } from "@/lib/game/data";
 import type { Card as CardModel, CardType } from "@/lib/game/types";
 import { cn } from "@/lib/utils";
 
-export type CardSize = "default" | "large" | "mini";
+export type CardSize = "default" | "large" | "xl" | "mini";
 
 interface CardProps {
   card: CardModel | CardType;
@@ -24,6 +24,7 @@ export function Card({ card, size = "default", playable, disabled, onClick, fade
       className={cn(
         "game-card",
         size === "large" && "large",
+        size === "xl" && "xl",
         size === "mini" && "mini",
         isLlama && "llama",
         playable && "playable",
@@ -35,12 +36,11 @@ export function Card({ card, size = "default", playable, disabled, onClick, fade
       <div className="card-value-top">{valueDisplay}</div>
       <div className="card-art">
         {isLlama ? (
-          <div className="card-art-llama">🦙</div>
+          <img src="/llama.png" alt="라마" className="card-art-llama-img" />
         ) : card.char ? (
           <img src={CHAR_IMAGES[card.char]} alt={card.name} />
         ) : null}
       </div>
-      <div className="card-name">{card.name}</div>
       <div className="card-value-bottom">{valueDisplay}</div>
     </div>
   );
@@ -48,6 +48,13 @@ export function Card({ card, size = "default", playable, disabled, onClick, fade
 
 export function CardBack({ size = "mini" }: { size?: CardSize }) {
   return (
-    <div className={cn("game-card back", size === "large" && "large", size === "mini" && "mini")} />
+    <div
+      className={cn(
+        "game-card back",
+        size === "large" && "large",
+        size === "xl" && "xl",
+        size === "mini" && "mini"
+      )}
+    />
   );
 }

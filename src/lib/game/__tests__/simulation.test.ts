@@ -6,31 +6,38 @@ import { canPlay, calculateScore } from "../rules";
 import type { GameState, Player } from "../types";
 
 /**
- * 부스 손님 승률 분포 시뮬레이터.
+ * 부스 4인 한 판 손님 등수 분포 시뮬레이터.
  *
- * 의도된 분포 (PRD / docs/game-rules.md §7):
- *  - 2승 ≈ 28%, 1승 ≈ 60%, 0승 ≈ 12%
+ * 캘리브레이션 목표 (튜닝 시 변경):
+ *  - P(손님 1·2·3등) ≈ 50%, P(꽝) ≈ 50%  (또는 행사 컨셉에 맞춰 조정)
  *
- * 무작위 시드라 매 실행 분산이 있어 기본은 `it.skip`. 튜닝할 때
- * 일시적으로 `it.skip` → `it`로 바꾸고 `pnpm test:run` 한 번 돌려보면 된다.
+ * 시뮬레이션 가정:
+ *  - 손님은 NPC와 동일한 휴리스틱(낼 수 있으면 가장 큰 점수 카드, 라운드 임박+점수 ≥8이면 quit)으로 둠.
+ *  - 첫 턴 강제 플레이 룰 적용 (낼 수 있으면 무조건 play, 없으면 draw, quit 금지).
+ *  - 동점은 손님이 위 (부스 우호 정책).
+ *  - 실제 손님은 더 약하게 둘 가능성이 있어 분포는 가이드. 손님 패배 비율은 실측에선 더 높을 수 있음.
  *
- * NOTE: 이 시뮬레이션은 사람 플레이어를 대신해 "정석" 전략(가장 점수 큰
- * playable 카드부터 던지고, 못 내면 점수 ≥6 / 라마+손≥3에서 quit)으로
- * 흉내낸다. 실제 손님은 더 약한 의사결정을 할 가능성도 있어 분포는 가이드.
+ * 무작위 시드라 매 실행 분산이 있어 기본은 `describe.skip`. 캘리브레이션할 때
+ * 일시적으로 `describe.skip` → `describe`로 바꾸고 `pnpm test:run` 으로 실행.
  */
 
-function buildPlayers(round: number): Player[] {
-  const opp = CONFIG.opponents[round - 1];
-  if (!opp) throw new Error("no opponent");
+function buildPlayers(): Player[] {
   return [
     { name: "손님", hand: [], quitted: false, isPlayer: true, lastAction: null, char: null },
-    { name: opp.name, hand: [], quitted: false, isPlayer: false, lastAction: null, char: opp.char },
+    ...CONFIG.opponents.map((opp) => ({
+      name: opp.name,
+      hand: [],
+      quitted: false,
+      isPlayer: false,
+      lastAction: null,
+      char: opp.char,
+    })),
   ];
 }
 
-function dealRound(round: number): GameState {
+function dealGame(): GameState {
   const deck = shuffle(createDeck());
-  const players = buildPlayers(round);
+  const players = buildPlayers();
   for (let i = 0; i < CONFIG.handSize; i++) {
     for (const p of players) {
       const c = deck.pop();
@@ -44,14 +51,14 @@ function dealRound(round: number): GameState {
     top,
     currentTurn: 0,
     phase: "playing",
-    round,
-    totalRounds: CONFIG.opponents.length,
+    round: 1,
+    totalRounds: 1,
     totalScores: {},
     roundHistory: [],
   };
 }
 
-/** 손님 정석 의사결정 — NPC normal 휴리스틱과 동일. */
+/** 손님 의사결정 — NPC 상황 인지 휴리스틱과 동일하되 첫 턴 강제 플레이 적용. */
 function decidePlayerMove(player: Player, state: GameState, isFirstTurn: boolean) {
   const playable = player.hand
     .map((c, i) => ({ c, i }))
@@ -60,26 +67,23 @@ function decidePlayerMove(player: Player, state: GameState, isFirstTurn: boolean
     playable.sort((a, b) => b.c.points - a.c.points);
     return { type: "play" as const, handIdx: playable[0]!.i, card: playable[0]!.c };
   }
-  if (isFirstTurn) return { type: "draw" as const }; // 첫 턴엔 quit 금지
-  const activeCount = state.players.filter((p) => !p.quitted).length;
-  if (activeCount === 1) return null;
+  if (isFirstTurn) return { type: "draw" as const };
+  const others = state.players.filter((p) => p.name !== player.name && !p.quitted);
+  if (others.length === 0) return null;
+  if (state.deck.length === 0) return { type: "quit" as const };
   const score = calculateScore(player.hand);
-  const hasLlama = player.hand.some((c) => c.value === "LLAMA");
-  if ((hasLlama && player.hand.length >= 3) || score >= 6 || state.deck.length === 0) {
-    return { type: "quit" as const };
-  }
+  const minOtherHand = Math.min(...others.map((p) => p.hand.length));
+  const roundEndingSoon = minOtherHand <= 1 || state.deck.length <= 3;
+  if (roundEndingSoon && score >= 8) return { type: "quit" as const };
   return { type: "draw" as const };
 }
 
 function applyDecision(
   s: GameState,
   idx: number,
-  decision: ReturnType<typeof decideNpcMove>
+  decision: ReturnType<typeof decideNpcMove>,
 ): GameState {
-  if (!decision) {
-    // 라운드 종료 신호로 반환
-    return { ...s, phase: "roundEnded" };
-  }
+  if (!decision) return { ...s, phase: "roundEnded" };
   const players = s.players.map((p, i) => (i === idx ? { ...p, hand: [...p.hand] } : p));
   const target = players[idx]!;
   if (decision.type === "play") {
@@ -110,58 +114,51 @@ function isRoundOver(s: GameState): boolean {
   return false;
 }
 
-function simulateRound(round: number): "win" | "lose" {
-  const opp = CONFIG.opponents[round - 1]!;
-  let s = dealRound(round);
+function simulateGame(): { place: number; playerScore: number; scores: number[] } {
+  let s = dealGame();
   let safety = 0;
-  while (!isRoundOver(s) && safety < 200) {
+  while (!isRoundOver(s) && safety < 400) {
     const cur = s.players[s.currentTurn]!;
     const isFirstTurn = s.players.every((p) => p.lastAction === null) && cur.isPlayer;
     const decision = cur.isPlayer
       ? decidePlayerMove(cur, s, isFirstTurn)
-      : decideNpcMove(cur, s, opp.difficulty);
+      : decideNpcMove(cur, s);
     if (!decision) break;
     s = applyDecision(s, s.currentTurn, decision as ReturnType<typeof decideNpcMove>);
     if (s.players[s.currentTurn]?.hand.length === 0 && !s.players[s.currentTurn]?.quitted) break;
     let next = (s.currentTurn + 1) % s.players.length;
     let g = 0;
-    while (s.players[next]?.quitted && g < 4) {
+    while (s.players[next]?.quitted && g < s.players.length) {
       next = (next + 1) % s.players.length;
       g++;
     }
     s = { ...s, currentTurn: next };
     safety++;
   }
-  const player = s.players[0]!;
-  const ai = s.players[1]!;
-  const ps = player.hand.length === 0 ? 0 : calculateScore(player.hand);
-  const as_ = ai.hand.length === 0 ? 0 : calculateScore(ai.hand);
-  return ps <= as_ ? "win" : "lose";
+  const scores = s.players.map((p) => (p.hand.length === 0 ? 0 : calculateScore(p.hand)));
+  const playerScore = scores[0]!;
+  // 동점은 손님 위 — strictly lower NPC count + 1
+  const lowerNpcCount = scores.slice(1).filter((sc) => sc < playerScore).length;
+  return { place: lowerNpcCount + 1, playerScore, scores };
 }
 
-describe.skip("부스 승률 분포 시뮬레이션", () => {
-  it("1만 판 → 2승 ~28%, 1승 ~60%, 0승 ~12% 근처", () => {
+describe.skip("부스 4인 손님 등수 분포", () => {
+  it("10000판 → P(1·2·3등) 측정", () => {
     const N = 10_000;
-    let twoWins = 0;
-    let oneWin = 0;
-    let zeroWins = 0;
+    const places = [0, 0, 0, 0];
+    let totalPlayerScore = 0;
     for (let i = 0; i < N; i++) {
-      const r1 = simulateRound(1);
-      const r2 = simulateRound(2);
-      const wins = (r1 === "win" ? 1 : 0) + (r2 === "win" ? 1 : 0);
-      if (wins === 2) twoWins++;
-      else if (wins === 1) oneWin++;
-      else zeroWins++;
+      const r = simulateGame();
+      places[r.place - 1]!++;
+      totalPlayerScore += r.playerScore;
     }
-    const total = twoWins + oneWin + zeroWins;
-    const pct = (n: number) => (n / total) * 100;
+    const pct = (n: number) => (n / N) * 100;
+    const top3 = pct(places[0]!) + pct(places[1]!) + pct(places[2]!);
     // eslint-disable-next-line no-console
     console.log(
-      `[booth distribution] 2승 ${pct(twoWins).toFixed(1)}% / 1승 ${pct(oneWin).toFixed(1)}% / 0승 ${pct(zeroWins).toFixed(1)}%`
+      `[place dist] 1등 ${pct(places[0]!).toFixed(1)}% / 2등 ${pct(places[1]!).toFixed(1)}% / 3등 ${pct(places[2]!).toFixed(1)}% / 4등 ${pct(places[3]!).toFixed(1)}% | 1·2·3등 합 ${top3.toFixed(1)}% | 손님 평균 점수 ${(totalPlayerScore / N).toFixed(2)}`,
     );
-    // 헐거운 가드 — 분포가 ±10%p 이내면 OK (튜닝 시점에만 활용)
-    expect(pct(twoWins)).toBeGreaterThan(15);
-    expect(pct(twoWins)).toBeLessThan(45);
-    expect(pct(zeroWins)).toBeLessThan(25);
+    // 가이드 — 부스 우호: 1·2·3등 ≥ 40% 정도면 합격선
+    expect(top3).toBeGreaterThan(20);
   });
 });

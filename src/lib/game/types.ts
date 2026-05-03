@@ -38,23 +38,20 @@ export interface Player {
 
 export interface RoundScore {
   name: string;
+  isPlayer: boolean;
   score: number;
   hand: Card[];
+  /** 1~4. 점수 낮을수록 1등. 동점은 손님이 더 높은 등수 (부스 우호) */
+  place: number;
+  quitted: boolean;
 }
 
-/** 1라운드(1 vs 1) 의 결과 */
+/** 4인 한 판의 결과. 1라운드만 존재. */
 export interface RoundHistoryEntry {
   round: number;
   scores: RoundScore[];
-  /**
-   * 손님(=isPlayer) 입장에서의 결과.
-   * 점수가 같거나 낮으면 win, 높으면 lose. (부스 분위기 위해 무승부도 손님 승)
-   */
-  outcome: "win" | "lose";
-  /** 동점이었는지 (UI에서 "동점이지만 승!" 메시지용) */
-  wasTie: boolean;
-  /** 이 라운드의 NPC 이름 (UI에서 "HYLION 전 / 네이버웨일 전" 표시용) */
-  opponentName: string;
+  /** 손님 등수 (1~totalPlayers) */
+  playerPlace: number;
 }
 
 export type GamePhase = "playing" | "roundEnded" | "finished";
@@ -74,8 +71,9 @@ export interface GameState {
 
 /** 게임 종료 시 손님의 결과 (상품 결정에 사용) */
 export interface PlayerSummary {
-  wins: number;
-  totalRounds: number;
-  /** 2승이면 키캡+인형 둘 다, 그 외엔 택1 */
-  prize: "both" | "one";
+  /** 손님 등수 (1~totalPlayers) */
+  place: number;
+  totalPlayers: number;
+  /** 1등 → both, 2·3등 → one, 4등(꼴등) → cheer */
+  prize: "both" | "one" | "cheer";
 }

@@ -18,13 +18,9 @@ export const LLAMA_CARD: CardType = {
   isLlama: true,
 };
 
-/** NPC 의사결정 강도. 부스 손님이 한 판은 잡고 가도록 라운드별로 다르게 설정. */
-export type NpcDifficulty = "easy" | "normal";
-
 export interface Opponent {
   name: string;
   char: CharKey;
-  difficulty: NpcDifficulty;
 }
 
 export interface GameConfig {
@@ -32,28 +28,25 @@ export interface GameConfig {
   copiesLlama: number;
   handSize: number;
   npcThinkDelay: number;
-  /**
-   * 라운드별 1대1 상대.
-   * 라운드 N(1-based)의 상대는 opponents[N-1].
-   * 길이가 곧 totalRounds.
-   */
+  /** 한 판의 NPC들 (4인전이라 길이 = 3). */
   opponents: ReadonlyArray<Opponent>;
 }
 
 export const CONFIG: GameConfig = {
   copiesPerNumber: 6,
   copiesLlama: 6,
-  handSize: 5,
-  npcThinkDelay: 1100,
+  handSize: 4,
+  // 진행속도 1/2 (이전 1100ms → 2200ms). 부스에서 카드 흐름을 또렷이 보이려고 천천히.
+  npcThinkDelay: 2200,
   opponents: [
-    // R1: 워밍업. 운영진/UI에 난이도 노출 금지.
-    { name: "HYLION", char: "hylion", difficulty: "easy" },
-    // R2: 진짜 승부.
-    { name: "네이버웨일", char: "naver_whale", difficulty: "normal" },
+    { name: "달토", char: "dalto" },
+    { name: "페포", char: "pepo" },
+    { name: "웨일", char: "naver_whale" },
   ],
 };
 
-export const TOTAL_ROUNDS = CONFIG.opponents.length;
+/** 4인 한 판 — 라운드는 항상 1. */
+export const TOTAL_ROUNDS = 1;
 
 export const CHAR_IMAGES: Record<CharKey, string> = {
   byul_e: "/characters/byul_e.png",

@@ -34,13 +34,14 @@ function makePlayer(name: string, isPlayer: boolean, char: Player["char"]): Play
 }
 
 /**
- * 라운드별로 상대 NPC가 다르므로 매 라운드마다 players를 재구성한다.
- * players[0] = 손님, players[1] = 그 라운드 상대.
+ * 4인 한 판 — players[0] = 손님, players[1..N] = NPC.
+ * NPC 순서는 CONFIG.opponents 그대로 (UI에서 좌·상·우 코너 매핑).
  */
-function buildPlayersForRound(round: number): Player[] {
-  const opp = CONFIG.opponents[round - 1];
-  if (!opp) throw new Error(`Round ${round} has no opponent in CONFIG.opponents`);
-  return [makePlayer("손님", true, null), makePlayer(opp.name, false, opp.char)];
+function buildPlayers(): Player[] {
+  return [
+    makePlayer("손님", true, null),
+    ...CONFIG.opponents.map((opp) => makePlayer(opp.name, false, opp.char)),
+  ];
 }
 
 function dealNewRound(state: GameState): GameState {
@@ -68,22 +69,46 @@ function dealNewRound(state: GameState): GameState {
   };
 }
 
-/** 부스 분위기 위해 동점도 손님 승. wasTie 플래그로 UI에선 동점이었음을 노출. */
-function judgeRound(
-  playerScore: number,
-  opponentScore: number
-): { outcome: RoundHistoryEntry["outcome"]; wasTie: boolean } {
-  if (playerScore === opponentScore) return { outcome: "win", wasTie: true };
-  return { outcome: playerScore < opponentScore ? "win" : "lose", wasTie: false };
+/**
+ * 4인전 등수 계산. 동점은 손님이 더 높은 등수 (부스 우호).
+ * 손님보다 엄격히 점수 낮은 사람 수 + 1 = 손님 등수.
+ * NPC끼리는 단순 정렬.
+ */
+function assignPlaces(
+  rows: { name: string; isPlayer: boolean; score: number }[]
+): Map<string, number> {
+  const player = rows.find((r) => r.isPlayer);
+  const playerScore = player?.score ?? 0;
+  // 손님 먼저 등수 매김 (동점 시 손님이 위)
+  const playerPlace = rows.filter((r) => !r.isPlayer && r.score < playerScore).length + 1;
+
+  // NPC 등수: 손님 등수를 비워두고 NPC끼리 점수 오름차순으로 배치
+  const npcs = rows
+    .filter((r) => !r.isPlayer)
+    .map((r) => ({ ...r }))
+    .sort((a, b) => a.score - b.score);
+
+  const places = new Map<string, number>();
+  if (player) places.set(player.name, playerPlace);
+
+  let cur = 1;
+  for (const npc of npcs) {
+    if (cur === playerPlace) cur++;
+    places.set(npc.name, cur);
+    cur++;
+  }
+  return places;
 }
 
 function summarize(history: readonly RoundHistoryEntry[]): PlayerSummary {
-  const wins = history.filter((h) => h.outcome === "win").length;
-  return {
-    wins,
-    totalRounds: history.length,
-    prize: wins === history.length ? "both" : "one",
-  };
+  const last = history[history.length - 1];
+  const totalPlayers = last?.scores.length ?? 4;
+  const place = last?.playerPlace ?? totalPlayers;
+  let prize: PlayerSummary["prize"];
+  if (place === 1) prize = "both";
+  else if (place === totalPlayers) prize = "cheer";
+  else prize = "one";
+  return { place, totalPlayers, prize };
 }
 
 /** 손님 첫 턴인지 판단 — 양쪽 모두 lastAction이 null이고 phase=playing. */
@@ -127,47 +152,51 @@ export const useGameStore = create<GameStore>((set, get) => {
   }
 
   function endRound() {
+    clearNpcTimer();
     const s = get().state;
     if (!s) return;
-    const player = s.players[0]!;
-    const opponent = s.players[1]!;
-    const playerScore = player.hand.length === 0 ? 0 : calculateScore(player.hand);
-    const opponentScore = opponent.hand.length === 0 ? 0 : calculateScore(opponent.hand);
-    const { outcome, wasTie } = judgeRound(playerScore, opponentScore);
 
-    const totalScores = {
-      ...s.totalScores,
-      [player.name]: (s.totalScores[player.name] ?? 0) + playerScore,
-      [opponent.name]: (s.totalScores[opponent.name] ?? 0) + opponentScore,
-    };
+    const rows = s.players.map((p) => ({
+      name: p.name,
+      isPlayer: p.isPlayer,
+      score: p.hand.length === 0 ? 0 : calculateScore(p.hand),
+      hand: [...p.hand],
+      quitted: p.quitted,
+    }));
+
+    const places = assignPlaces(rows);
+    const scores = rows.map((r) => ({
+      name: r.name,
+      isPlayer: r.isPlayer,
+      score: r.score,
+      hand: r.hand,
+      place: places.get(r.name) ?? rows.length,
+      quitted: r.quitted,
+    }));
+    const playerPlace = scores.find((s) => s.isPlayer)?.place ?? rows.length;
+
+    const totalScores = { ...s.totalScores };
+    for (const r of rows) {
+      totalScores[r.name] = (totalScores[r.name] ?? 0) + r.score;
+    }
 
     const entry: RoundHistoryEntry = {
       round: s.round,
-      opponentName: opponent.name,
-      outcome,
-      wasTie,
-      scores: [
-        { name: player.name, score: playerScore, hand: [...player.hand] },
-        { name: opponent.name, score: opponentScore, hand: [...opponent.hand] },
-      ],
+      scores,
+      playerPlace,
     };
     const nextHistory = [...s.roundHistory, entry];
 
-    const baseNext: GameState = {
-      ...s,
-      phase: "roundEnded",
-      totalScores,
-      roundHistory: nextHistory,
-    };
-
-    if (s.round >= s.totalRounds) {
-      set({
-        state: { ...baseNext, phase: "finished" },
-        summary: summarize(nextHistory),
-      });
-    } else {
-      set({ state: baseNext });
-    }
+    // 4인 1판 — 라운드 끝 = 게임 끝.
+    set({
+      state: {
+        ...s,
+        phase: "finished",
+        totalScores,
+        roundHistory: nextHistory,
+      },
+      summary: summarize(nextHistory),
+    });
   }
 
   function advanceTurn() {
@@ -199,8 +228,7 @@ export const useGameStore = create<GameStore>((set, get) => {
       return;
     }
 
-    const opp = CONFIG.opponents[s.round - 1];
-    const decision = decideNpcMove(npc, s, opp?.difficulty ?? "normal");
+    const decision = decideNpcMove(npc, s);
     if (!decision) {
       endRound();
       return;
@@ -245,7 +273,7 @@ export const useGameStore = create<GameStore>((set, get) => {
 
     startGame: () => {
       clearNpcTimer();
-      const players = buildPlayersForRound(1);
+      const players = buildPlayers();
       const totalScores: Record<string, number> = {};
       players.forEach((p) => {
         totalScores[p.name] = 0;
@@ -290,7 +318,9 @@ export const useGameStore = create<GameStore>((set, get) => {
       const activeCount = s.players.filter((p) => !p.quitted).length;
       if (activeCount === 1) return;
       if (s.deck.length === 0) {
-        get().playerQuit();
+        // 덱이 비면 뽑기 자체 무시 — 의도하지 않은 자동 quit 방지.
+        // UI 측 drawDisabled가 "덱 비었음" 라벨로 안내.
+        get().showToast("덱이 비어 카드를 뽑을 수 없어요");
         return;
       }
       const newPlayers = s.players.map((p, i) => (i === 0 ? { ...p, hand: [...p.hand] } : p));
@@ -306,6 +336,8 @@ export const useGameStore = create<GameStore>((set, get) => {
     playerQuit: () => {
       const s = get().state;
       if (!s || s.phase !== "playing" || s.currentTurn !== 0) return;
+      // 첫 턴 강제 — 손님이 첫 턴에 그만하기 못 함 (부스 우호 룰).
+      if (isPlayerFirstTurn(s)) return;
       const newPlayers = s.players.map((p, i) =>
         i === 0 ? { ...p, quitted: true, lastAction: { type: "quit" as const } } : p
       );
@@ -313,25 +345,8 @@ export const useGameStore = create<GameStore>((set, get) => {
       advanceTurn();
     },
 
-    goNextRound: () => {
-      const s = get().state;
-      if (!s) return;
-      if (s.round >= s.totalRounds) return;
-      const nextRoundNum = s.round + 1;
-      const newPlayers = buildPlayersForRound(nextRoundNum);
-      // 누적 점수 키에 새 NPC 이름 추가
-      const totalScores = { ...s.totalScores };
-      for (const p of newPlayers) {
-        if (!(p.name in totalScores)) totalScores[p.name] = 0;
-      }
-      const seedState: GameState = {
-        ...s,
-        round: nextRoundNum,
-        players: newPlayers,
-        totalScores,
-      };
-      set({ state: dealNewRound(seedState) });
-    },
+    /** 4인 1판 구조에서는 호출 X. 다중 라운드 구조 복귀 시 재구현. */
+    goNextRound: () => {},
 
     reset: () => {
       clearNpcTimer();

@@ -1,4 +1,4 @@
-import type { Card, CardValue } from "./types";
+import type { Card, CardValue, CharKey, Player } from "./types";
 
 /**
  * 매칭 규칙:
@@ -38,4 +38,32 @@ export function calculateScore(hand: readonly Card[]): number {
 
 export function formatScore(p: number): string {
   return p === 0 ? "0" : "-" + p;
+}
+
+/**
+ * 라운드 종료 사유를 현재 플레이어 상태에서 파생.
+ * gameStore.checkRoundEnd 의 분기와 의미적으로 일치하지만, 사후(phase=finished) 관찰용.
+ */
+export type EndReason =
+  | { type: "out"; name: string; char: CharKey | null }
+  | { type: "all-quit" }
+  | { type: "deadlock"; name: string };
+
+export function deriveEndReason(players: readonly Player[]): EndReason | null {
+  const out = players.find((p) => p.hand.length === 0 && !p.quitted);
+  if (out) return { type: "out", name: out.name, char: out.char };
+
+  const active = players.filter((p) => !p.quitted);
+  if (active.length === 0) return { type: "all-quit" };
+  if (active.length === 1) {
+    const last = active[0]!;
+    return { type: "deadlock", name: last.name };
+  }
+  return null;
+}
+
+export function describeEndReason(r: EndReason): { emoji: string; line: string } {
+  if (r.type === "out") return { emoji: "🏁", line: `${r.name} 카드 다 냈어요!` };
+  if (r.type === "all-quit") return { emoji: "✋", line: "모두 그만했어요" };
+  return { emoji: "🚫", line: `${r.name} 낼 카드 없음` };
 }

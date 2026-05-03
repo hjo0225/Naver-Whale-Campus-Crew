@@ -1,13 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { CARD_TYPES, CHAR_IMAGES, LLAMA_CARD } from "@/lib/game/data";
 import { SLIDE_DURATION_MS, SLIDE_PATTERN } from "@/lib/config";
 import { Card } from "@/components/game/Card";
+import { FullPageSlider } from "@/components/ui/FullPageSlider";
+import { useGameStore } from "@/lib/store/gameStore";
 import type { CharKey } from "@/lib/game/types";
 
-const FEATURE_SLIDES = [
+interface FeatureSlide {
+  eyebrow: string;
+  title: string;
+  desc: string;
+  tags: readonly string[];
+  scenario: string;
+}
+
+const FEATURE_SLIDES: readonly FeatureSlide[] = [
   {
     eyebrow: "기능 01",
     title: "사이드바",
@@ -53,130 +63,139 @@ const HEADER_FRIENDS_ORDER: CharKey[] = [
   "pepo",
 ];
 
-export function Slideshow() {
-  const [active, setActive] = useState(0);
-
-  useEffect(() => {
-    let patternIndex = 0;
-    setActive(SLIDE_PATTERN[0]!);
-    const interval = setInterval(() => {
-      patternIndex = (patternIndex + 1) % SLIDE_PATTERN.length;
-      setActive(SLIDE_PATTERN[patternIndex]!);
-    }, SLIDE_DURATION_MS);
-    return () => clearInterval(interval);
-  }, []);
-
-  const allCards = useMemo(() => [...CARD_TYPES, LLAMA_CARD], []);
-
+function QRPanel() {
   return (
-    <div className="slideshow text-white">
-      {/* Slide 0: intro */}
-      <div className={`slide ${active === 0 ? "active" : ""}`}>
-        <div className="max-w-[1100px] w-full text-center px-4">
-          <span className="inline-block text-xs font-bold tracking-[0.14em] uppercase px-3 py-1.5 rounded-full mb-8 text-(--color-brand-cyan) border border-(--color-brand-cyan)/65 bg-white/5">
-            WHALE BOOTH
-          </span>
-          <h1 className="text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6">
-            네이버 웨일과 함께하는
-            <br />
-            <span className="text-(--color-brand-cyan)">캠퍼스 부스</span>
-          </h1>
-          <p className="text-xl text-[#C9D3DD] mb-16">함께하면 더 즐거운 한 판</p>
-          <div className="flex justify-center gap-4 mb-12">
-            {HEADER_FRIENDS_ORDER.map((c) => (
-              <img
-                key={c}
-                src={CHAR_IMAGES[c]}
-                alt={c}
-                className="w-20 h-20 rounded-full bg-white/10 object-cover"
-              />
-            ))}
-          </div>
-          <Link href="/conditions/" className="btn btn-primary btn-large !bg-white !text-(--color-brand-deep)">
-            참가 방법 보기 →
-          </Link>
-        </div>
-      </div>
-
-      {/* Slides 1~5: features */}
-      {FEATURE_SLIDES.map((f, i) => {
-        const slideIdx = i + 1;
-        return (
-          <div key={f.title} className={`slide ${active === slideIdx ? "active" : ""}`}>
-            <div className="max-w-[1280px] w-full grid md:grid-cols-[1fr_1.15fr] gap-16 items-center px-4">
-              <div className="text-left">
-                <span className="inline-block text-xs font-bold tracking-[0.14em] uppercase px-3 py-1.5 rounded-full mb-6 text-(--color-brand-cyan) border border-(--color-brand-cyan)/65 bg-white/5">
-                  {f.eyebrow}
-                </span>
-                <h1 className="text-6xl font-extrabold tracking-tight leading-[1.05] mb-6">
-                  {f.title}
-                </h1>
-                <p className="text-lg text-[#C9D3DD] leading-relaxed mb-6">{f.desc}</p>
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {f.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="text-xs px-3 py-1 border border-white/30 text-[#C9D3DD] rounded-full font-medium"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-                <div className="pt-6 border-t border-white/20 text-base text-[#C9D3DD] leading-relaxed">
-                  <strong className="text-(--color-brand-cyan)">이럴 때 좋아요</strong>
-                  <br />
-                  {f.scenario}
-                </div>
-              </div>
-              <div className="aspect-[16/10] bg-white/5 border border-dashed border-white/30 rounded-xl flex items-center justify-center text-[#C9D3DD] text-center p-8">
-                실제 사용 화면
-                <br />({f.title} 스크린샷)
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
-      {/* Slide 6: 게임 시작 */}
-      <div className={`slide ${active === 6 ? "active" : ""}`}>
-        <div className="max-w-[1100px] w-full text-center px-4">
-          <span className="inline-block text-xs font-bold tracking-[0.14em] uppercase px-3 py-1.5 rounded-full mb-8 text-(--color-brand-cyan) border border-(--color-brand-cyan)/65 bg-white/5">
-            WHALE BOOTH GAME
-          </span>
-          <h1 className="text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6">
-            웨일프렌즈와<br />
-            <span className="text-(--color-brand-cyan)">한 판 어때?</span>
-          </h1>
-          <p className="text-xl text-[#C9D3DD] mb-16">함께하면 더 즐거운 부스 게임</p>
-          <div className="flex justify-center gap-3 mb-16">
-            {allCards.map((c) => (
-              <Card key={String(c.id)} card={c} size="large" />
-            ))}
-          </div>
-          <Link href="/rules/" className="btn btn-primary btn-large !bg-white !text-(--color-brand-deep)">
-            게임 시작 ▶
-          </Link>
-        </div>
-      </div>
-
-      {/* Slide indicator */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <button
-            key={i}
-            onClick={() => setActive(i)}
-            className={cn_dot(active === i)}
-            aria-label={`슬라이드 ${i + 1}`}
-          />
-        ))}
+    <div className="flex items-center justify-center">
+      <div className="w-[320px] h-[320px] bg-white rounded-3xl flex items-center justify-center overflow-hidden shadow-[0_16px_48px_rgba(0,22,60,0.3)]">
+        <img
+          src="/qr.png"
+          alt="부스 QR 코드"
+          className="w-full h-full object-contain p-4"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
       </div>
     </div>
   );
 }
 
-function cn_dot(active: boolean) {
-  return [
-    "h-1 rounded transition-all",
-    active ? "w-16 bg-(--color-brand-cyan)" : "w-8 bg-white/30",
-  ].join(" ");
+function IntroSlide() {
+  return (
+    <div className="w-full grid md:grid-cols-[1.4fr_1fr] gap-20 items-center">
+      <div className="text-left">
+        <span className="eyebrow mb-8">WHALE BOOTH</span>
+        <h1 className="display-h1 mt-6 mb-5">
+          네이버 웨일과 함께하는
+          <br />
+          <span className="text-(--color-brand-cyan)">캠퍼스 부스</span>
+        </h1>
+        <p className="text-xl text-[#C9D3DD] mb-10">함께하면 더 즐거운 한 판</p>
+        <div className="flex gap-4 mb-12">
+          {HEADER_FRIENDS_ORDER.map((c) => (
+            <img
+              key={c}
+              src={CHAR_IMAGES[c]}
+              alt={c}
+              className="w-24 h-24 rounded-full bg-white/10 object-cover"
+            />
+          ))}
+        </div>
+        <Link
+          href="/conditions/"
+          className="cta-btn cta-btn-primary cta-btn-pill !bg-white !text-(--color-brand-deep)"
+        >
+          참가 방법 보기 →
+        </Link>
+      </div>
+      <QRPanel />
+    </div>
+  );
+}
+
+function FeatureSlideView({ f }: { f: FeatureSlide }) {
+  return (
+    <div className="w-full grid md:grid-cols-[1fr_1.15fr] gap-16 items-center">
+      <div className="text-left">
+        <span className="eyebrow mb-6">{f.eyebrow}</span>
+        <h1 className="display-h1 mt-6 mb-6">{f.title}</h1>
+        <p className="text-xl text-[#C9D3DD] leading-relaxed mb-6">{f.desc}</p>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {f.tags.map((t) => (
+            <span
+              key={t}
+              className="text-sm px-3 py-1 border border-white/30 text-[#C9D3DD] rounded-full font-medium"
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+        <div className="pt-6 border-t border-white/20 text-lg text-[#C9D3DD] leading-relaxed">
+          <strong className="text-(--color-brand-cyan)">이럴 때 좋아요</strong>
+          <br />
+          {f.scenario}
+        </div>
+      </div>
+      <div className="aspect-[16/10] bg-white/5 border border-dashed border-white/30 rounded-2xl flex items-center justify-center text-[#C9D3DD] text-center p-8 text-lg">
+        실제 사용 화면
+        <br />({f.title} 스크린샷)
+      </div>
+    </div>
+  );
+}
+
+function GameStartSlide() {
+  const allCards = useMemo(() => [...CARD_TYPES, LLAMA_CARD], []);
+  return (
+    <div className="w-full text-center">
+      <span className="eyebrow mb-8">WHALE BOOTH GAME</span>
+      <h1 className="display-h1 mt-6 mb-6">
+        웨일프렌즈와
+        <br />
+        <span className="text-(--color-brand-cyan)">한 판 어때?</span>
+      </h1>
+      <p className="text-2xl text-[#C9D3DD] mb-16">함께하면 더 즐거운 부스 게임</p>
+      <div className="flex justify-center gap-3 mb-16 flex-wrap">
+        {allCards.map((c) => (
+          <Card key={String(c.id)} card={c} size="large" />
+        ))}
+      </div>
+      <Link
+        href="/rules/"
+        className="cta-btn cta-btn-primary cta-btn-pill !bg-white !text-(--color-brand-deep)"
+      >
+        게임 시작 ▶
+      </Link>
+    </div>
+  );
+}
+
+export function Slideshow() {
+  const reset = useGameStore((s) => s.reset);
+
+  // 홈 도착 시 게임 store 정리 — 결과 화면에서 "처음으로" 누른 뒤 stale 결과가 남지 않도록.
+  useEffect(() => {
+    reset();
+  }, [reset]);
+
+  const pages = useMemo(
+    () => [
+      <IntroSlide key="intro" />,
+      ...FEATURE_SLIDES.map((f) => <FeatureSlideView key={f.title} f={f} />),
+      <GameStartSlide key="game-start" />,
+    ],
+    [],
+  );
+
+  return (
+    <div className="text-white">
+      <FullPageSlider
+        pages={pages}
+        mode="auto"
+        autoIntervalMs={SLIDE_DURATION_MS}
+        pattern={SLIDE_PATTERN}
+        variant="brand"
+      />
+    </div>
+  );
 }

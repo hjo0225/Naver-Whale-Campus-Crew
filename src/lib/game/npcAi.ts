@@ -1,4 +1,3 @@
-import type { NpcDifficulty } from "./data";
 import { canPlay, calculateScore } from "./rules";
 import type { Card, GameState, Player } from "./types";
 
@@ -7,24 +6,30 @@ export type NpcDecision =
   | { type: "draw" }
   | { type: "quit" };
 
+/** 손패가 이 값 이하일 때만 그만하기를 고려. */
+export const QUIT_HAND_THRESHOLD = 5;
+/** 점수(절대값)가 이 값 이하일 때만 그만하기를 고려 — 큰 손실 굳히기 방지. */
+export const QUIT_SCORE_THRESHOLD = 10;
+/** 손패·점수 임계 모두 통과 시 매 턴 그만하기 확률. */
+export const QUIT_PROBABILITY = 0.3;
+
 /**
- * 난이도별 NPC 의사결정.
+ * NPC 의사결정 — 부스 우호형.
  *
- * normal (R2 네이버웨일):
  *  - 낼 수 있는 카드가 있으면 가장 점수가 큰 카드부터 던진다 (라마 우선 폐기).
- *  - 못 내고 라마 보유 + 손 ≥3 → quit / 점수 ≥6 → quit / 덱이 비었음 → quit / else draw.
+ *  - 덱이 완전히 비었으면 강제 quit.
+ *  - 손패 ≤ {@link QUIT_HAND_THRESHOLD} AND 점수 ≤ {@link QUIT_SCORE_THRESHOLD}
+ *    일 때만 {@link QUIT_PROBABILITY} 확률로 quit.
+ *  - 그 외에는 draw.
  *
- * easy (R1 HYLION):
- *  - 낼 수 있는 카드가 있을 때 30% 확률로 random playable (best 대신 실수).
- *  - quit 임계 완화: 라마 + 손 ≥4, 점수 ≥9.
- *  - 그 외엔 normal과 동일.
+ * 부스 우호: 손패가 큰 NPC는 절대 quit 안 함 → 카드 쌓임 → NPC 점수 ↑ →
+ * 손님 등수에서 유리. 점수가 -10 초과인 NPC도 quit 안 함 → 큰 손실 굳히기 방지.
  *
  * 혼자 남은 NPC는 draw 불가 → null 반환 (호출자가 라운드 종료 처리).
  */
 export function decideNpcMove(
   npc: Player,
   state: GameState,
-  difficulty: NpcDifficulty = "normal"
 ): NpcDecision | null {
   if (npc.quitted) return null;
 
@@ -33,29 +38,24 @@ export function decideNpcMove(
     .filter((x) => canPlay(x.c, state.top));
 
   if (playable.length > 0) {
-    if (difficulty === "easy" && Math.random() < 0.3) {
-      // 가끔 실수: random playable. 손님이 R1을 따낼 확률 ↑
-      const pick = playable[Math.floor(Math.random() * playable.length)]!;
-      return { type: "play", handIdx: pick.i, card: pick.c };
-    }
     playable.sort((a, b) => b.c.points - a.c.points);
     const best = playable[0]!;
     return { type: "play", handIdx: best.i, card: best.c };
   }
 
-  const activeCount = state.players.filter((p) => !p.quitted).length;
-  if (activeCount === 1) return null;
+  const others = state.players.filter((p) => p.name !== npc.name && !p.quitted);
+  if (others.length === 0) return null;
+
+  if (state.deck.length === 0) return { type: "quit" };
 
   const score = calculateScore(npc.hand);
-  const hasLlama = npc.hand.some((c) => c.value === "LLAMA");
+  if (
+    npc.hand.length <= QUIT_HAND_THRESHOLD &&
+    score <= QUIT_SCORE_THRESHOLD &&
+    Math.random() < QUIT_PROBABILITY
+  ) {
+    return { type: "quit" };
+  }
 
-  const llamaHandThreshold = difficulty === "easy" ? 4 : 3;
-  const scoreThreshold = difficulty === "easy" ? 9 : 6;
-
-  const shouldQuit =
-    (hasLlama && npc.hand.length >= llamaHandThreshold) ||
-    score >= scoreThreshold ||
-    state.deck.length === 0;
-
-  return shouldQuit ? { type: "quit" } : { type: "draw" };
+  return { type: "draw" };
 }
