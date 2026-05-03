@@ -108,11 +108,18 @@ export function FullPageSlider({
       )}
     >
       {isTouch && enableTouchFallback ? (
-        // 모바일 — 모든 페이지를 세로로 쌓고 native scroll-snap 으로 전환
+        // 모바일 — 세로 stack + native scroll-snap. 각 페이지는 viewport 진입 시 fade-up.
         pages.map((page, i) => (
-          <div key={i} className="fullpage-page">
+          <motion.div
+            key={i}
+            className="fullpage-page"
+            initial={{ y: 32, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ amount: 0.4, margin: "-10% 0px" }}
+            transition={TRANSITION}
+          >
             <div className="fullpage-inner">{page}</div>
-          </div>
+          </motion.div>
         ))
       ) : (
         <AnimatePresence mode="wait" initial={false}>

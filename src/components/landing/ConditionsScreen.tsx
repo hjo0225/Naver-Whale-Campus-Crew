@@ -5,13 +5,6 @@ import { useMemo } from "react";
 import { REFERRAL_CODE } from "@/lib/config";
 import { useGameStore } from "@/lib/store/gameStore";
 import { FullPageSlider } from "@/components/ui/FullPageSlider";
-import {
-  Rule01Page,
-  Rule02Page,
-  Rule03Page,
-  Rule04Page,
-  Rule05Page,
-} from "@/components/landing/RulesScreen";
 
 function IntroPage() {
   return (
@@ -27,7 +20,7 @@ function IntroPage() {
           마우스 휠을 굴려서 단계별로 확인하세요.
         </p>
         <p className="text-base text-(--color-text-muted) max-w-[480px] mx-auto md:mx-0">
-          본인 휴대폰의 웨일 앱에서 추천인 코드를 등록하고, 인증 화면을 캡처해서 부스에 보여주시면 됩니다.
+          본인 PC의 웨일 브라우저에서 추천인 코드를 등록하고, 인증 화면을 캡처해서 부스에 보여주시면 됩니다.
         </p>
       </div>
       <div className="aspect-[16/10] bg-(--color-board-soft) border border-dashed border-(--color-text-muted)/40 rounded-2xl flex items-center justify-center text-(--color-text-muted) text-center p-8 text-lg">
@@ -45,19 +38,19 @@ function Step1Page() {
       <div>
         <span className="eyebrow mb-5">STEP 01</span>
         <h2 className="display-h2 mt-4 mb-6">
-          웨일 앱에서
+          웨일 브라우저에서
           <br />
           추천인 코드 입력
         </h2>
         <p className="text-lg text-(--color-text-secondary) leading-relaxed mb-3">
-          본인 휴대폰의 네이버 웨일 모바일 앱을 실행하고{" "}
+          본인 PC의 네이버 웨일 브라우저를 실행하고{" "}
           <strong className="text-(--color-text)">설정 → 추천인 코드</strong> 메뉴로 이동해주세요.
         </p>
         <p className="text-lg text-(--color-text-secondary) leading-relaxed mb-3">
           안내 화면에서 부스 추천인 코드를 입력하면 등록 완료입니다.
         </p>
         <p className="text-base text-(--color-text-muted)">
-          웨일 앱이 없으시면 부스 운영진에게 말씀해 주세요.
+          웨일 브라우저가 설치돼 있지 않으시면 부스 운영진에게 말씀해 주세요.
         </p>
       </div>
       <div className="grid grid-cols-3 gap-3">
@@ -90,7 +83,7 @@ function Step2Page({ onCopy }: { onCopy: () => void }) {
         <br />+ 인증 화면 캡처
       </h2>
       <p className="text-lg text-(--color-text-secondary) max-w-[540px] mx-auto mb-10">
-        아래 코드를 복사해서 웨일 앱에 입력하고, 인증 완료 화면을 휴대폰으로 캡처해 주세요.
+        아래 코드를 복사해서 웨일 브라우저에 입력하고, 인증 완료 화면을 캡처해 주세요.
       </p>
 
       <div className="surface-card brand flex items-center justify-between gap-4 max-w-[500px] mx-auto mb-2">
@@ -157,7 +150,7 @@ function Step3Page() {
         </p>
       </div>
 
-      <Link href="/rules/" className="cta-btn cta-btn-primary cta-btn-pill">
+      <Link href="/conditions/rules/" className="cta-btn cta-btn-primary cta-btn-pill">
         게임 미리 체험하기 →
       </Link>
     </div>
@@ -182,11 +175,6 @@ export function ConditionsScreen() {
       <Step1Page key="step1" />,
       <Step2Page key="step2" onCopy={copyCode} />,
       <Step3Page key="step3" />,
-      <Rule01Page key="r1" />,
-      <Rule02Page key="r2" />,
-      <Rule03Page key="r3" />,
-      <Rule04Page key="r4" />,
-      <Rule05Page key="r5" showStartButton={false} />,
     ],
     // copyCode는 store selector + 클로저라 매 렌더 새 ref. showToast는 안정적이므로 deps 비움.
     // eslint-disable-next-line react-hooks/exhaustive-deps

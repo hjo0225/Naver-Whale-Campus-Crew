@@ -167,12 +167,14 @@ function GameStartSlide() {
         >
           싱글 플레이 ▶
         </Link>
+        {/* PvP 대전 진입 — RTDB 셋업/부스 운영 정리 후 다시 노출.
         <Link
           href="/game/pvp/"
           className="cta-btn cta-btn-pill !bg-(--color-brand-cyan) !text-white"
         >
           🤝 PvP 대전 (노트북 2대)
         </Link>
+        */}
       </div>
     </div>
   );
