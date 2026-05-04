@@ -77,6 +77,9 @@
     line-height: 1.5;
     /* 자간/장평 살짝 — 한글 가독성 + 보드룩 여유감 */
     letter-spacing: 0.012em;
+    /* iOS Safari 가로모드/특정 상황에서 텍스트 자동 확대(Boost) 방지 */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   button {

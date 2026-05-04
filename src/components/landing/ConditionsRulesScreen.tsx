@@ -159,11 +159,11 @@ function CompactRule04() {
         <strong className="text-(--color-text)">점수가 깎입니다</strong>. 0장이면 페널티 없음,
         라마(8점)는 가장 무거운 폭탄.
       </p>
-      <div className="flex flex-wrap justify-center gap-3 mb-5">
-        <Card card={CARD_TYPES[0]!} size="large" />
-        <Card card={CARD_TYPES[3]!} size="large" />
-        <Card card={CARD_TYPES[3]!} size="large" />
-        <Card card={LLAMA_CARD} size="large" />
+      <div className="flex flex-wrap justify-center gap-2 mb-5">
+        <Card card={CARD_TYPES[0]!} size="mini" />
+        <Card card={CARD_TYPES[3]!} size="mini" />
+        <Card card={CARD_TYPES[3]!} size="mini" />
+        <Card card={LLAMA_CARD} size="mini" />
       </div>
       <p className="text-sm text-(--color-text-secondary) mb-1">
         예시 손패: 1 + 4 + (4 중복은 미카운트) + 8 ={" "}
