@@ -48,3 +48,5 @@ gcloud-key*.json
 # original prototype assets (keep but don't ship)
 asset/
 CLAUDE.md
+# 프로젝트 문서 — 로컬 SSOT, 깃에 올리지 않음
+docs/
