@@ -66,7 +66,7 @@ function IntroSlide() {
     <div className="w-full grid md:grid-cols-[1.4fr_1fr] gap-20 items-center">
       <div className="text-left">
         <span className="eyebrow mb-8">WHALE BOOTH</span>
-        <h1 className="display-h1 mt-6 mb-5">
+        <h1 className="display-h1 mt-6 mb-10 sm:mb-12">
           네이버 웨일과 함께하는
           <br />
           <span className="text-(--color-brand-cyan)">캠퍼스 부스</span>

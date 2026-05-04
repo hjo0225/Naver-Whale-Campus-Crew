@@ -70,7 +70,7 @@ function Step1SubPage({ s }: { s: Step1Sub }) {
       <p className="text-base sm:text-lg text-(--color-text-secondary) mb-5">
         {s.desc}
       </p>
-      <div className="aspect-[9/16] max-h-[55dvh] rounded-lg overflow-hidden bg-white border border-(--color-divider) shadow-(--shadow-soft)">
+      <div className="aspect-[9/16] max-h-[68dvh] rounded-lg overflow-hidden bg-white border border-(--color-divider) shadow-(--shadow-soft)">
         <img
           src={s.img}
           alt={s.title}

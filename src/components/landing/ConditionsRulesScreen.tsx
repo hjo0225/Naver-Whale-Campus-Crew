@@ -23,14 +23,14 @@ function CompactRule01() {
       <div className="flex flex-wrap gap-2 justify-center mb-5">
         {CARD_TYPES.map((c) => (
           <div key={String(c.id)} className="flex flex-col items-center gap-1.5">
-            <Card card={c} size="default" />
+            <Card card={c} size="mini" />
             <span className="text-xs font-bold text-(--color-text-secondary)">
               -{c.points}점
             </span>
           </div>
         ))}
         <div className="flex flex-col items-center gap-1.5">
-          <Card card={LLAMA_CARD} size="default" />
+          <Card card={LLAMA_CARD} size="mini" />
           <span className="text-xs font-bold text-(--color-llama-text)">
             -{LLAMA_CARD.points}점
           </span>
@@ -60,20 +60,20 @@ function CompactRule02() {
           <div className="text-xs font-bold text-(--color-text-muted) mb-1.5">
             바닥에 캐릭3이 있다면
           </div>
-          <Card card={CARD_TYPES[2]!} size="default" />
+          <Card card={CARD_TYPES[2]!} size="mini" />
         </div>
         <div className="text-2xl text-(--color-text-muted) font-bold leading-none">↓</div>
         <div className="grid gap-2">
           <div className="flex items-center gap-2">
             <span className="font-bold text-green-600 text-sm w-14 text-left">✓ 가능</span>
-            <Card card={CARD_TYPES[2]!} size="default" />
-            <Card card={CARD_TYPES[3]!} size="default" />
+            <Card card={CARD_TYPES[2]!} size="mini" />
+            <Card card={CARD_TYPES[3]!} size="mini" />
           </div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-red-500 text-sm w-14 text-left">✗ 불가</span>
-            <Card card={CARD_TYPES[0]!} size="default" faded />
-            <Card card={CARD_TYPES[1]!} size="default" faded />
-            <Card card={CARD_TYPES[4]!} size="default" faded />
+            <Card card={CARD_TYPES[0]!} size="mini" faded />
+            <Card card={CARD_TYPES[1]!} size="mini" faded />
+            <Card card={CARD_TYPES[4]!} size="mini" faded />
           </div>
         </div>
       </div>
@@ -85,73 +85,64 @@ function CompactRule02() {
   );
 }
 
-function CompactRule03() {
+interface Rule3Action {
+  n: string;
+  title: string;
+  desc: string;
+  visual: ReactNode;
+  exception?: string;
+}
+
+const RULE3_ACTIONS: readonly Rule3Action[] = [
+  {
+    n: "1",
+    title: "카드 내기",
+    desc: "매칭되는 카드를 골라 바닥에 내세요.",
+    visual: <Card card={CARD_TYPES[2]!} size="default" />,
+  },
+  {
+    n: "2",
+    title: "카드 뽑기",
+    desc: "덱에서 1장 뽑고 차례를 종료합니다.",
+    visual: <CardBack size="default" />,
+  },
+  {
+    n: "3",
+    title: "그만하기",
+    desc: "이 라운드 이탈, 손에 든 카드로 점수 확정.",
+    visual: (
+      <span className="text-7xl leading-none" aria-hidden>
+        ✋
+      </span>
+    ),
+    exception:
+      "다른 사람이 모두 그만하면 뽑기 불가 — 낼 카드만 내거나 그만하세요",
+  },
+];
+
+function CompactRule03Sub({ a }: { a: Rule3Action }) {
   return (
-    <div className="text-center max-w-[560px] mx-auto px-4">
-      <span className="eyebrow mb-3">RULE 03 · 차례 행동</span>
-      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2 mb-3">
-        내 차례에 3가지 선택
+    <div className="text-center max-w-[440px] mx-auto px-4">
+      <span className="eyebrow mb-2">RULE 03 · 차례 행동</span>
+      <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight mt-2 mb-2">
+        STEP {a.n} · {a.title}
       </h2>
-      <p className="text-sm sm:text-base text-(--color-text-secondary) mb-6">
-        매 차례 <strong className="text-(--color-text)">셋 중 하나</strong>를 골라야 해요.
+      <p className="text-sm sm:text-base text-(--color-text-secondary) mb-5">
+        {a.desc}
       </p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {(
-          [
-            {
-              n: "1",
-              visual: <Card card={CARD_TYPES[2]!} size="default" />,
-              t: "카드 내기",
-              d: "매칭되는 카드를 골라 바닥에 내기",
-            },
-            {
-              n: "2",
-              visual: <CardBack size="default" />,
-              t: "카드 뽑기",
-              d: "덱에서 1장 뽑고 차례 종료",
-            },
-            {
-              n: "3",
-              visual: (
-                <span className="text-5xl leading-none" aria-hidden>
-                  ✋
-                </span>
-              ),
-              t: "그만하기",
-              d: "이 라운드 이탈, 손에 든 카드로 점수 확정",
-            },
-          ] as ReadonlyArray<{ n: string; visual: ReactNode; t: string; d: string }>
-        ).map((a) => (
-          <div
-            key={a.t}
-            className="surface-card flex flex-col items-center text-center px-3 py-3 gap-1"
-          >
-            <span className="text-[10px] font-bold tracking-[0.14em] text-(--color-brand-cyan)">
-              STEP {a.n}
-            </span>
-            <div className="my-1 flex items-center justify-center min-h-[124px]">
-              {a.visual}
-            </div>
-            <h3 className="text-sm font-extrabold tracking-tight">{a.t}</h3>
-            <p className="text-(--color-text-secondary) text-[11px] leading-relaxed">{a.d}</p>
-          </div>
-        ))}
+      <div className="flex items-center justify-center min-h-[140px] mb-4">
+        {a.visual}
       </div>
-
-      <p className="text-sm text-(--color-text-secondary) mt-5">
-        못 내겠으면 <strong>뽑거나 그만하기</strong>를 선택
-      </p>
-
-      <div className="surface-card muted mt-4 inline-flex items-center gap-2 text-left text-xs sm:text-sm text-(--color-text-secondary) px-4 py-2">
-        <span className="text-[10px] font-bold tracking-[0.12em] text-(--color-brand) shrink-0">
-          예외
-        </span>
-        <span>
-          <strong className="text-(--color-text)">다른 사람이 모두 그만하면 뽑기 불가</strong>{" "}
-          — 낼 카드만 내거나 그만하세요
-        </span>
-      </div>
+      {a.exception && (
+        <div className="surface-card muted inline-flex items-start gap-2 text-left text-xs text-(--color-text-secondary) px-3 py-2 max-w-[360px] mx-auto">
+          <span className="text-[10px] font-bold tracking-[0.12em] text-(--color-brand) shrink-0 mt-0.5">
+            예외
+          </span>
+          <span>
+            <strong className="text-(--color-text)">{a.exception}</strong>
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -238,7 +229,9 @@ export function ConditionsRulesScreen() {
     () => [
       <CompactRule01 key="r1" />,
       <CompactRule02 key="r2" />,
-      <CompactRule03 key="r3" />,
+      ...RULE3_ACTIONS.map((a, i) => (
+        <CompactRule03Sub key={`r3-${i}`} a={a} />
+      )),
       <CompactRule04 key="r4" />,
       <CompactRule05 key="r5" />,
     ],
