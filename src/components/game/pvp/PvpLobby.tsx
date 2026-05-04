@@ -17,6 +17,10 @@ function formatAge(createdAt: number): string {
   return `${Math.floor(min / 60)}시간 전`;
 }
 
+const brandBg: React.CSSProperties = {
+  background: "var(--brand-grad)",
+};
+
 export function PvpLobby() {
   const hostNew = usePvpStore((s) => s.hostNew);
   const joinExisting = usePvpStore((s) => s.joinExisting);
@@ -33,10 +37,8 @@ export function PvpLobby() {
   const [code, setCode] = useState("");
   const [editingNick, setEditingNick] = useState(false);
   const [nickDraft, setNickDraft] = useState("");
-  // SSR HTML과 첫 클라이언트 렌더가 일치해야 함 — mount 후에만 닉네임 게이트 분기.
   const [mounted, setMounted] = useState(false);
 
-  // 마운트 후 localStorage 에서 닉네임 hydrate (SSR 시 nickname="" 유지).
   useEffect(() => {
     setMounted(true);
     if (!usePvpStore.getState().nickname) {
@@ -45,13 +47,12 @@ export function PvpLobby() {
     }
   }, [setNickname]);
 
-  // 닉네임 미설정이면 자동으로 입력 화면 표시 (mount 전에는 게이트 숨김).
   const nicknameMissing = mounted && !nickname;
   const showNicknameGate = nicknameMissing || editingNick;
 
   useEffect(() => {
     if (!mounted) return;
-    if (nicknameMissing) return; // 닉네임 입력 전엔 로비 구독 안 함
+    if (nicknameMissing) return;
     void watchLobby();
     return () => unwatchLobby();
   }, [watchLobby, unwatchLobby, nicknameMissing, mounted]);
@@ -70,10 +71,19 @@ export function PvpLobby() {
 
   if (showNicknameGate) {
     return (
-      <div className="flex min-h-screen items-start justify-center bg-slate-900 px-4 py-10 sm:items-center">
-        <div className="w-full max-w-md rounded-3xl bg-white/95 p-6 shadow-2xl sm:p-8">
-          <h1 className="mb-1 text-center text-2xl font-bold">닉네임 설정</h1>
-          <p className="mb-6 text-center text-sm text-slate-600">
+      <div
+        className="flex min-h-screen items-center justify-center px-4 py-10"
+        style={brandBg}
+      >
+        <div className="surface-card w-full max-w-sm" style={{ padding: "2rem" }}>
+          <span className="eyebrow block text-center mb-3">PvP 대전</span>
+          <h1
+            className="text-2xl font-extrabold text-center mb-1 tracking-tight"
+            style={{ color: "var(--color-text)" }}
+          >
+            닉네임 설정
+          </h1>
+          <p className="text-center text-sm mb-6" style={{ color: "var(--color-text-secondary)" }}>
             보드에 표시될 이름이에요 (최대 {NICKNAME_MAX}자)
           </p>
 
@@ -81,19 +91,18 @@ export function PvpLobby() {
             type="text"
             value={nickDraft}
             onChange={(e) => setNickDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onSaveNickname();
-            }}
+            onKeyDown={(e) => { if (e.key === "Enter") onSaveNickname(); }}
             maxLength={NICKNAME_MAX * 3}
             autoFocus
             placeholder="예: 웨일맨"
-            className="mb-4 w-full rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-center text-lg font-semibold outline-none focus:border-emerald-500"
+            className="mb-4 w-full rounded-xl border-2 bg-white px-4 py-3 text-center text-lg font-semibold outline-none transition focus:border-[var(--color-brand)]"
+            style={{ borderColor: "var(--color-border)", fontFamily: "var(--font-sans)" }}
           />
 
           <button
             type="button"
             onClick={onSaveNickname}
-            className="mb-2 w-full rounded-2xl bg-emerald-500 py-3 text-base font-bold text-white shadow-lg transition hover:bg-emerald-600"
+            className="cta-btn cta-btn-primary w-full mb-2"
           >
             확인
           </button>
@@ -106,14 +115,17 @@ export function PvpLobby() {
                 setNickDraft("");
                 setError(null);
               }}
-              className="w-full rounded-xl bg-slate-100 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+              className="cta-btn cta-btn-ghost w-full"
             >
               취소
             </button>
           )}
 
           {error && (
-            <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700">
+            <p
+              className="mt-4 rounded-lg px-3 py-2 text-center text-sm"
+              style={{ background: "#fef2f2", color: "#b91c1c" }}
+            >
               {error}
             </p>
           )}
@@ -132,52 +144,98 @@ export function PvpLobby() {
   };
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-slate-900 px-4 py-10 sm:items-center">
-      <div className="w-full max-w-md rounded-3xl bg-white/95 p-6 shadow-2xl sm:p-8">
-        <h1 className="mb-1 text-center text-2xl font-bold">PvP 대전 모드</h1>
-        <p className="mb-4 text-center text-sm text-slate-600">
-          최대 4명 — 빈 자리는 NPC가 채워요
-        </p>
-
-        <div className="mb-5 flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-2.5 text-sm">
-          <span className="text-slate-500">내 닉네임</span>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-800">{nickname}</span>
-            <button
-              type="button"
-              onClick={() => {
-                setNickDraft(nickname);
-                setEditingNick(true);
-                setError(null);
-              }}
-              className="rounded-md bg-white px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-100"
+    <div
+      className="flex min-h-screen items-center justify-center px-4 py-10"
+      style={brandBg}
+    >
+      <div className="surface-card w-full max-w-md" style={{ padding: "2rem" }}>
+        {/* 헤더 */}
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <span className="eyebrow block mb-1">카드게임</span>
+            <h1
+              className="text-2xl font-extrabold tracking-tight"
+              style={{ color: "var(--color-text)" }}
             >
-              변경
-            </button>
+              PvP 대전 모드
+            </h1>
+            <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+              최대 4명 — 빈 자리는 NPC가 채워요
+            </p>
+          </div>
+
+          {/* 닉네임 칩 */}
+          <div
+            className="rounded-xl px-3 py-2 text-right flex-shrink-0 ml-4"
+            style={{
+              background: "var(--color-board-soft)",
+              border: "1px solid var(--color-divider)",
+            }}
+          >
+            <div
+              className="text-xs font-semibold mb-0.5"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              내 닉네임
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm" style={{ color: "var(--color-text)" }}>
+                {nickname}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setNickDraft(nickname);
+                  setEditingNick(true);
+                  setError(null);
+                }}
+                className="text-xs font-semibold rounded-md px-2 py-0.5 transition"
+                style={{
+                  background: "white",
+                  color: "var(--color-brand)",
+                  border: "1px solid var(--color-border)",
+                }}
+              >
+                변경
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* 방 만들기 */}
         <button
           type="button"
           disabled={busy}
           onClick={() => void hostNew()}
-          className="mb-5 w-full rounded-2xl bg-emerald-500 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-emerald-600 disabled:opacity-50"
+          className="cta-btn cta-btn-primary w-full mb-5"
         >
           ＋ 방 만들기
         </button>
 
+        {/* 열린 방 목록 */}
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-700">열린 방</h2>
-          <span className="text-xs text-slate-500">
-            {openRooms.length > 0 ? `${openRooms.length}개 모집중` : ""}
-          </span>
+          <h2 className="text-sm font-bold" style={{ color: "var(--color-text)" }}>
+            열린 방
+          </h2>
+          {openRooms.length > 0 && (
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              {openRooms.length}개 모집중
+            </span>
+          )}
         </div>
 
         {openRooms.length === 0 ? (
-          <div className="mb-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+          <div
+            className="mb-5 rounded-xl border-2 border-dashed px-4 py-8 text-center text-sm"
+            style={{
+              borderColor: "var(--color-border)",
+              color: "var(--color-text-muted)",
+              background: "var(--color-board-soft)",
+            }}
+          >
             아직 열린 방이 없어요
             <br />
-            <span className="text-xs text-slate-400">
+            <span className="text-xs opacity-70">
               직접 방을 만들거나 친구를 기다려보세요
             </span>
           </div>
@@ -191,21 +249,31 @@ export function PvpLobby() {
                     type="button"
                     disabled={busy}
                     onClick={() => void joinExisting(r.code)}
-                    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-sky-400 hover:bg-sky-50 disabled:opacity-50"
+                    className="w-full text-left transition rounded-xl px-4 py-3 flex items-center justify-between gap-3 hover:border-[var(--color-action-cyan)] hover:bg-[var(--color-brand-soft)] disabled:opacity-50"
+                    style={{
+                      background: "var(--color-board-soft)",
+                      border: "1.5px solid var(--color-divider)",
+                    }}
                   >
                     <div className="flex flex-col">
-                      <span className="font-mono text-lg font-bold tracking-[0.18em] text-slate-800">
+                      <span
+                        className="font-mono text-lg font-bold tracking-[0.18em]"
+                        style={{ color: "var(--color-text)" }}
+                      >
                         {r.code}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                         {formatAge(r.createdAt)} 생성
                       </span>
                     </div>
                     <div className="flex flex-col items-end gap-0.5">
-                      <span className="text-sm font-semibold text-emerald-600">
+                      <span
+                        className="text-sm font-bold"
+                        style={{ color: "var(--color-action-cyan)" }}
+                      >
                         {r.slotCount}/4명
                       </span>
-                      <span className="text-[11px] text-slate-400">
+                      <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                         NPC {npc}명
                       </span>
                     </div>
@@ -216,7 +284,8 @@ export function PvpLobby() {
           </ul>
         )}
 
-        <div className="border-t border-slate-200 pt-4">
+        {/* 코드 직접 입장 */}
+        <div style={{ borderTop: "1px solid var(--color-divider)", paddingTop: "1rem" }}>
           {!showCodeInput ? (
             <button
               type="button"
@@ -225,13 +294,17 @@ export function PvpLobby() {
                 setError(null);
                 setShowCodeInput(true);
               }}
-              className="w-full rounded-xl py-2 text-sm font-semibold text-slate-600 transition hover:text-sky-600"
+              className="w-full rounded-xl py-2 text-sm font-semibold transition hover:text-[var(--color-brand)]"
+              style={{ color: "var(--color-text-secondary)" }}
             >
               코드로 직접 입장
             </button>
           ) : (
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-600">
+              <label
+                className="block text-xs font-bold"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 4자리 방 코드
               </label>
               <input
@@ -241,14 +314,16 @@ export function PvpLobby() {
                 maxLength={6}
                 autoFocus
                 placeholder="예: A3F7"
-                className="w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-center text-xl font-mono font-bold tracking-widest uppercase outline-none focus:border-sky-500"
+                className="w-full rounded-xl border-2 bg-white px-3 py-2 text-center text-xl font-mono font-bold tracking-widest uppercase outline-none transition focus:border-[var(--color-brand)]"
+                style={{ borderColor: "var(--color-border)" }}
               />
               <div className="flex gap-2">
                 <button
                   type="button"
                   disabled={busy}
                   onClick={onCodeJoin}
-                  className="flex-1 rounded-xl bg-sky-500 py-2 text-sm font-bold text-white transition hover:bg-sky-600 disabled:opacity-50"
+                  className="cta-btn cta-btn-primary flex-1 disabled:opacity-50"
+                  style={{ borderRadius: "var(--radius-md)", padding: "0.65rem 1rem" }}
                 >
                   입장
                 </button>
@@ -260,7 +335,8 @@ export function PvpLobby() {
                     setCode("");
                     setError(null);
                   }}
-                  className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-300"
+                  className="cta-btn cta-btn-ghost disabled:opacity-50"
+                  style={{ borderRadius: "var(--radius-md)", padding: "0.65rem 1rem" }}
                 >
                   취소
                 </button>
@@ -270,12 +346,17 @@ export function PvpLobby() {
         </div>
 
         {error && (
-          <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700">
+          <p
+            className="mt-4 rounded-lg px-3 py-2 text-center text-sm"
+            style={{ background: "#fef2f2", color: "#b91c1c" }}
+          >
             {error}
           </p>
         )}
         {busy && (
-          <p className="mt-4 text-center text-sm text-slate-500">처리 중…</p>
+          <p className="mt-4 text-center text-sm" style={{ color: "var(--color-text-muted)" }}>
+            처리 중…
+          </p>
         )}
       </div>
     </div>

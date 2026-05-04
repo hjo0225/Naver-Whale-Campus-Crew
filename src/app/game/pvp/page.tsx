@@ -6,8 +6,11 @@ import dynamic from "next/dynamic";
 const PvpScreen = dynamic(() => import("@/components/game/pvp/PvpScreen"), {
   ssr: false,
   loading: () => (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
-      <p>로딩 중…</p>
+    <div
+      className="flex min-h-screen items-center justify-center text-white"
+      style={{ background: "var(--brand-grad)" }}
+    >
+      <p className="font-semibold opacity-75">로딩 중…</p>
     </div>
   ),
 });

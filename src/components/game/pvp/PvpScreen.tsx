@@ -35,10 +35,15 @@ export default function PvpScreen() {
 
   if (!isFirebaseConfigured()) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-900 p-6">
-        <div className="max-w-md rounded-2xl bg-white p-6 text-center shadow-xl">
-          <h2 className="mb-2 text-lg font-bold text-red-600">Firebase 설정 필요</h2>
-          <p className="text-sm text-slate-700">
+      <div
+        className="flex min-h-screen items-center justify-center p-6"
+        style={{ background: "var(--brand-grad)" }}
+      >
+        <div className="surface-card max-w-md text-center" style={{ padding: "2rem" }}>
+          <h2 className="mb-2 text-lg font-bold" style={{ color: "#b91c1c" }}>
+            Firebase 설정 필요
+          </h2>
+          <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
             <code>.env.local</code>에 <code>NEXT_PUBLIC_FIREBASE_*</code> 5개 키를 채워주세요.
             <br />
             (<code>.env.local.example</code> 참고)
@@ -72,16 +77,24 @@ export default function PvpScreen() {
 function PvpAborted() {
   const leave = usePvpStore((s) => s.leave);
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 px-6">
-      <div className="w-full max-w-md rounded-3xl bg-white/95 p-8 text-center shadow-2xl">
-        <h2 className="mb-2 text-xl font-bold text-slate-800">게임이 중단됐어요</h2>
-        <p className="mb-6 text-sm text-slate-600">
+    <div
+      className="flex min-h-screen items-center justify-center px-6"
+      style={{ background: "var(--brand-grad)" }}
+    >
+      <div className="surface-card w-full max-w-md text-center" style={{ padding: "2rem" }}>
+        <h2
+          className="mb-2 text-xl font-extrabold tracking-tight"
+          style={{ color: "var(--color-text)" }}
+        >
+          게임이 중단됐어요
+        </h2>
+        <p className="mb-6 text-sm" style={{ color: "var(--color-text-secondary)" }}>
           상대 연결이 끊겼거나 운영진이 방을 닫았습니다.
         </p>
         <button
           type="button"
           onClick={() => void leave()}
-          className="rounded-2xl bg-emerald-500 px-6 py-3 font-bold text-white shadow-lg transition hover:bg-emerald-600"
+          className="cta-btn cta-btn-primary"
         >
           로비로
         </button>
