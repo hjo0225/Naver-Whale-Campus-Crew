@@ -20,18 +20,18 @@ function CompactRule01() {
         1~5 숫자 카드와 캐릭6(라마) 카드. 마지막에 손에 들고 있으면{" "}
         <strong className="text-(--color-text)">그 점수만큼 깎입니다</strong>.
       </p>
-      <div className="flex flex-wrap gap-3 justify-center mb-5">
+      <div className="flex flex-wrap gap-2 justify-center mb-5">
         {CARD_TYPES.map((c) => (
-          <div key={String(c.id)} className="flex flex-col items-center gap-2">
-            <Card card={c} size="large" />
-            <span className="text-sm font-bold text-(--color-text-secondary)">
+          <div key={String(c.id)} className="flex flex-col items-center gap-1.5">
+            <Card card={c} size="default" />
+            <span className="text-xs font-bold text-(--color-text-secondary)">
               -{c.points}점
             </span>
           </div>
         ))}
-        <div className="flex flex-col items-center gap-2">
-          <Card card={LLAMA_CARD} size="large" />
-          <span className="text-sm font-bold text-(--color-llama-text)">
+        <div className="flex flex-col items-center gap-1.5">
+          <Card card={LLAMA_CARD} size="default" />
+          <span className="text-xs font-bold text-(--color-llama-text)">
             -{LLAMA_CARD.points}점
           </span>
         </div>
@@ -55,25 +55,25 @@ function CompactRule02() {
         <strong className="text-(--color-text)">같은 숫자나 한 칸 위 숫자만</strong> 낼 수 있어요.
       </p>
 
-      <div className="flex flex-col items-center justify-center gap-4">
+      <div className="flex flex-col items-center justify-center gap-3">
         <div className="flex flex-col items-center">
-          <div className="text-xs font-bold text-(--color-text-muted) mb-2">
+          <div className="text-xs font-bold text-(--color-text-muted) mb-1.5">
             바닥에 캐릭3이 있다면
           </div>
-          <Card card={CARD_TYPES[2]!} size="large" />
+          <Card card={CARD_TYPES[2]!} size="default" />
         </div>
-        <div className="text-3xl text-(--color-text-muted) font-bold leading-none">↓</div>
-        <div className="grid gap-3">
-          <div className="flex items-center gap-3">
-            <span className="font-bold text-green-600 text-base w-16 text-left">✓ 가능</span>
-            <Card card={CARD_TYPES[2]!} size="large" />
-            <Card card={CARD_TYPES[3]!} size="large" />
+        <div className="text-2xl text-(--color-text-muted) font-bold leading-none">↓</div>
+        <div className="grid gap-2">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-green-600 text-sm w-14 text-left">✓ 가능</span>
+            <Card card={CARD_TYPES[2]!} size="default" />
+            <Card card={CARD_TYPES[3]!} size="default" />
           </div>
-          <div className="flex items-center gap-3">
-            <span className="font-bold text-red-500 text-base w-16 text-left">✗ 불가</span>
-            <Card card={CARD_TYPES[0]!} size="large" faded />
-            <Card card={CARD_TYPES[1]!} size="large" faded />
-            <Card card={CARD_TYPES[4]!} size="large" faded />
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-red-500 text-sm w-14 text-left">✗ 불가</span>
+            <Card card={CARD_TYPES[0]!} size="default" faded />
+            <Card card={CARD_TYPES[1]!} size="default" faded />
+            <Card card={CARD_TYPES[4]!} size="default" faded />
           </div>
         </div>
       </div>
@@ -101,20 +101,20 @@ function CompactRule03() {
           [
             {
               n: "1",
-              visual: <Card card={CARD_TYPES[2]!} size="large" />,
+              visual: <Card card={CARD_TYPES[2]!} size="default" />,
               t: "카드 내기",
               d: "매칭되는 카드를 골라 바닥에 내기",
             },
             {
               n: "2",
-              visual: <CardBack size="large" />,
+              visual: <CardBack size="default" />,
               t: "카드 뽑기",
               d: "덱에서 1장 뽑고 차례 종료",
             },
             {
               n: "3",
               visual: (
-                <span className="text-6xl leading-none" aria-hidden>
+                <span className="text-5xl leading-none" aria-hidden>
                   ✋
                 </span>
               ),
@@ -125,16 +125,16 @@ function CompactRule03() {
         ).map((a) => (
           <div
             key={a.t}
-            className="surface-card flex flex-col items-center text-center px-4 py-5 gap-1.5"
+            className="surface-card flex flex-col items-center text-center px-3 py-3 gap-1"
           >
             <span className="text-[10px] font-bold tracking-[0.14em] text-(--color-brand-cyan)">
               STEP {a.n}
             </span>
-            <div className="my-1 flex items-center justify-center min-h-[160px]">
+            <div className="my-1 flex items-center justify-center min-h-[124px]">
               {a.visual}
             </div>
-            <h3 className="text-base font-extrabold tracking-tight">{a.t}</h3>
-            <p className="text-(--color-text-secondary) text-xs leading-relaxed">{a.d}</p>
+            <h3 className="text-sm font-extrabold tracking-tight">{a.t}</h3>
+            <p className="text-(--color-text-secondary) text-[11px] leading-relaxed">{a.d}</p>
           </div>
         ))}
       </div>

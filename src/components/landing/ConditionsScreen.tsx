@@ -127,43 +127,46 @@ function Step2Page({ onCopy }: { onCopy: () => void }) {
 function Step3Page() {
   return (
     <div className="text-center max-w-[760px] mx-auto">
-      <span className="eyebrow mb-5">STEP 03</span>
-      <h2 className="display-h2 mt-4 mb-6">현장 인증 후 게임 참여</h2>
-      <p className="text-lg text-(--color-text-secondary) max-w-[540px] mx-auto mb-10">
+      <span className="eyebrow mb-2 sm:mb-5">STEP 03</span>
+      <h2 className="display-h2 mt-2 mb-3 sm:mt-4 sm:mb-6">현장 인증 후 게임 참여</h2>
+      <p className="text-sm sm:text-lg text-(--color-text-secondary) max-w-[540px] mx-auto mb-4 sm:mb-10">
         캡처한 인증 화면을 부스 운영진에게 보여주면 게임을 즐길 수 있어요.
       </p>
 
-      <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-[600px] mx-auto mb-10">
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 max-w-[400px] sm:max-w-[600px] mx-auto mb-4 sm:mb-10">
         <div className="text-center">
-          <div className="surface-card muted aspect-square flex items-center justify-center text-(--color-text-muted) mb-3">
+          <div className="surface-card muted aspect-square flex items-center justify-center text-(--color-text-muted) mb-2 sm:mb-3 text-xs sm:text-base p-2">
             키캡 이미지
             <br />
             (추후 삽입)
           </div>
-          <div className="font-bold">키캡</div>
+          <div className="text-sm sm:text-base font-bold">키캡</div>
         </div>
         <div className="text-center">
-          <div className="surface-card muted aspect-square flex items-center justify-center text-(--color-text-muted) mb-3">
+          <div className="surface-card muted aspect-square flex items-center justify-center text-(--color-text-muted) mb-2 sm:mb-3 text-xs sm:text-base p-2">
             인형 이미지
             <br />
             (추후 삽입)
           </div>
-          <div className="font-bold">인형</div>
+          <div className="text-sm sm:text-base font-bold">인형</div>
         </div>
       </div>
 
-      <div className="surface-card accent max-w-[600px] mx-auto mb-8 text-left px-6 sm:px-8 py-6 sm:py-7">
-        <div className="text-xs font-bold tracking-[0.12em] text-(--color-accent-deep) mb-3">
+      <div className="surface-card accent max-w-[400px] sm:max-w-[600px] mx-auto mb-4 sm:mb-8 text-left px-4 sm:px-8 py-3 sm:py-7">
+        <div className="text-[10px] sm:text-xs font-bold tracking-[0.12em] text-(--color-accent-deep) mb-1.5 sm:mb-3">
           참여 안내
         </div>
-        <p className="text-base leading-relaxed text-(--color-text-secondary)">
+        <p className="text-xs sm:text-base leading-relaxed text-(--color-text-secondary)">
           <strong className="text-(--color-text)">
             참가 시 키캡 또는 인형 택1, 1등 시 둘 다 증정!
           </strong>
         </p>
       </div>
 
-      <Link href="/conditions/rules/" className="cta-btn cta-btn-primary cta-btn-pill">
+      <Link
+        href="/conditions/rules/"
+        className="cta-btn cta-btn-primary cta-btn-pill text-sm sm:text-xl px-6 py-3 sm:px-10 sm:py-5"
+      >
         게임 미리 체험하기 →
       </Link>
     </div>
