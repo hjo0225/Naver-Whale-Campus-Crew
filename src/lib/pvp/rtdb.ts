@@ -23,7 +23,14 @@ import {
   type DataSnapshot,
 } from "firebase/database";
 
-import type { Room, RoomState, ActionEnvelope, SlotKey } from "./schema";
+import {
+  SLOT_KEYS,
+  countSlots,
+  type Room,
+  type RoomState,
+  type ActionEnvelope,
+  type SlotKey,
+} from "./schema";
 import { generateRoomCode } from "./roomCode";
 
 const config = {
@@ -91,15 +98,69 @@ export function watchRoom(code: string, cb: (room: Room | null) => void): () => 
   return unsub;
 }
 
+/** 로비에 보여줄 공개 방 요약. */
+export interface PublicRoomSummary {
+  code: string;
+  hostUid: string;
+  createdAt: number;
+  slotCount: number;
+}
+
+/**
+ * 모집중인 방 목록 구독. 조건:
+ *  - meta.status === "waiting"
+ *  - 슬롯 4명 미만
+ *  - 1시간 이내 생성 (stale 방 방치 방지)
+ *
+ * 콜백은 새 변경마다 정렬된 배열을 받음 (최신 방이 위).
+ */
+export function watchOpenRooms(
+  cb: (rooms: PublicRoomSummary[]) => void
+): () => void {
+  const r = ref(getDb(), "rooms");
+  const STALE_MS = 60 * 60 * 1000;
+  const unsub = onValue(r, (snap: DataSnapshot) => {
+    if (!snap.exists()) {
+      cb([]);
+      return;
+    }
+    const all = snap.val() as Record<string, Room>;
+    const now = Date.now();
+    const out: PublicRoomSummary[] = [];
+    for (const [code, room] of Object.entries(all)) {
+      if (!room?.meta) continue;
+      if (room.meta.status !== "waiting") continue;
+      const createdAt = room.meta.createdAt ?? 0;
+      if (createdAt && now - createdAt > STALE_MS) continue;
+      const slotCount = countSlots(room.slots);
+      if (slotCount >= 4) continue;
+      out.push({
+        code,
+        hostUid: room.meta.hostUid,
+        createdAt,
+        slotCount,
+      });
+    }
+    out.sort((a, b) => b.createdAt - a.createdAt);
+    cb(out);
+  });
+  return unsub;
+}
+
 /**
  * 방 생성 — transaction으로 코드 충돌 방지. 최대 5회 재시도.
  * 성공 시 점유한 코드 반환.
  */
-export async function createRoom(uid: string): Promise<string> {
+export async function createRoom(uid: string, name?: string): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = generateRoomCode();
     const result = await runTransaction(roomRef(code), (current) => {
       if (current) return; // 충돌 — abort
+      const slot: { uid: string; joinedAt: number; name?: string } = {
+        uid,
+        joinedAt: Date.now(),
+      };
+      if (name) slot.name = name;
       return {
         meta: {
           createdAt: Date.now(),
@@ -107,7 +168,7 @@ export async function createRoom(uid: string): Promise<string> {
           status: "waiting",
         },
         slots: {
-          p0: { uid, joinedAt: Date.now() },
+          p0: slot,
         },
       };
     });
@@ -116,22 +177,45 @@ export async function createRoom(uid: string): Promise<string> {
   throw new Error("방 코드를 생성하지 못했습니다 (5회 재시도 실패)");
 }
 
-/** 게스트가 방에 입장. 빈 슬롯이 있으면 점유, 없으면 throw. */
-export async function joinRoom(code: string, uid: string): Promise<void> {
-  const slotsRef = ref(getDb(), `rooms/${code}/slots/p1`);
-  const result = await runTransaction(slotsRef, (current) => {
-    if (current) return; // 이미 점유됨 — abort
-    return { uid, joinedAt: Date.now() };
+/**
+ * 게스트가 방에 입장. p1→p2→p3 순서로 빈 슬롯 자동 탐색 후 점유.
+ * 이미 같은 uid로 들어와 있으면 그 슬롯 그대로 반환 (재진입).
+ * 게임 시작 후(state 존재)면 입장 거부.
+ */
+export async function joinRoom(
+  code: string,
+  uid: string,
+  name?: string
+): Promise<SlotKey> {
+  // 0) 방 자체 존재 + 시작 여부 확인
+  const rSnap = await new Promise<DataSnapshot>((resolve) => {
+    onValue(roomRef(code), resolve, { onlyOnce: true });
   });
-  if (!result.committed) {
-    // 방 자체가 없는지 / 슬롯이 차있는지 구분
-    const r = roomRef(code);
-    const snap = await new Promise<DataSnapshot>((resolve) => {
-      onValue(r, resolve, { onlyOnce: true });
-    });
-    if (!snap.exists()) throw new Error("존재하지 않는 방 코드입니다");
-    throw new Error("방이 이미 가득 찼습니다");
+  if (!rSnap.exists()) throw new Error("존재하지 않는 방 코드입니다");
+  const room = rSnap.val() as Room;
+  if (room.meta?.status && room.meta.status !== "waiting") {
+    throw new Error("이미 시작된 방입니다");
   }
+  // 1) 같은 uid가 이미 어느 슬롯에 있다면 그 슬롯 그대로 (새로고침 대응)
+  for (const k of SLOT_KEYS) {
+    if (room.slots?.[k]?.uid === uid) return k;
+  }
+  // 2) 빈 슬롯 점유 (transaction)
+  for (const k of SLOT_KEYS) {
+    if (k === "p0") continue; // 호스트 슬롯은 createRoom에서 점유
+    const slotsRef = ref(getDb(), `rooms/${code}/slots/${k}`);
+    const result = await runTransaction(slotsRef, (current) => {
+      if (current) return; // 이미 점유됨 — abort, 다음 슬롯 시도
+      const slot: { uid: string; joinedAt: number; name?: string } = {
+        uid,
+        joinedAt: Date.now(),
+      };
+      if (name) slot.name = name;
+      return slot;
+    });
+    if (result.committed) return k;
+  }
+  throw new Error("방이 이미 가득 찼습니다");
 }
 
 /** 호스트만 호출. 전체 state 덮어쓰기. */
@@ -168,7 +252,8 @@ export async function deleteRoom(code: string): Promise<void> {
 
 export function slotKeyForUid(room: Room | null, uid: string): SlotKey | null {
   if (!room) return null;
-  if (room.slots?.p0?.uid === uid) return "p0";
-  if (room.slots?.p1?.uid === uid) return "p1";
+  for (const k of SLOT_KEYS) {
+    if (room.slots?.[k]?.uid === uid) return k;
+  }
   return null;
 }

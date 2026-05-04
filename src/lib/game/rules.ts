@@ -63,7 +63,7 @@ export function deriveEndReason(players: readonly Player[]): EndReason | null {
 }
 
 export function describeEndReason(r: EndReason): { emoji: string; line: string } {
-  if (r.type === "out") return { emoji: "🏁", line: `${r.name} 카드 다 냈어요!` };
+  if (r.type === "out") return { emoji: "🏁", line: `${r.name}님이 카드를 다 냈습니다.` };
   if (r.type === "all-quit") return { emoji: "✋", line: "모두 그만했어요" };
   return { emoji: "🚫", line: `${r.name} 낼 카드 없음` };
 }

@@ -4,22 +4,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useGameStore, isPlayerFirstTurn } from "@/lib/store/gameStore";
 import { canPlay } from "@/lib/game/rules";
 import { CHAR_IMAGES } from "@/lib/game/data";
-import type { Action, GameState, Player } from "@/lib/game/types";
+import type { GameState, Player } from "@/lib/game/types";
 import { Card, CardBack } from "./Card";
 import { cn } from "@/lib/utils";
 
 // ===== 헬퍼 =====
-
-function metaForBadge(action: Action | null): string {
-  if (!action) return "대기";
-  if (action.type === "play") {
-    const v = action.card.value === "LLAMA" ? "라마" : action.card.value;
-    return `방금 ${v}`;
-  }
-  if (action.type === "draw") return "방금 뽑기";
-  if (action.type === "quit") return "그만";
-  return "대기";
-}
 
 function fanRotate(i: number, total: number): number {
   if (total <= 1) return 0;
@@ -103,17 +92,6 @@ export function GameBoard() {
 
   return (
     <div className="game-shell">
-      <Sidebar
-        state={state}
-        isPlayerTurn={isPlayerTurn}
-        isSoloActive={isSoloActive}
-        drawDisabled={drawDisabled}
-        quitDisabled={quitDisabled}
-        drawLabel={drawLabel}
-        quitLabel={quitLabel}
-        onDraw={playerDraw}
-        onQuit={playerQuit}
-      />
       <div className="game-area">
         <div className="game-table-wrap">
           <div className="game-table">
@@ -177,6 +155,17 @@ export function GameBoard() {
             {npcs[2] && (
               <NpcHand hand={npcs[2].hand} pos="right" quitted={npcs[2].quitted} />
             )}
+
+            {/* 테이블 내부 좌하단 — 그만하기 / 우하단 — 카드 뽑기 */}
+            <ActionBar
+              isSoloActive={isPlayerTurn && isSoloActive}
+              drawDisabled={drawDisabled}
+              quitDisabled={quitDisabled}
+              drawLabel={drawLabel}
+              quitLabel={quitLabel}
+              onDraw={playerDraw}
+              onQuit={playerQuit}
+            />
 
             {/* 손님 핸드 — 테두리 가까이. 그만하기 시 카드 페이드 + ✋ 이모지로 대체 */}
             <div
@@ -268,23 +257,7 @@ export function GameBoard() {
   );
 }
 
-// ===== 서브 컴포넌트 =====
-
-interface SidebarProps {
-  state: GameState;
-  isPlayerTurn: boolean;
-  isSoloActive: boolean;
-  drawDisabled: boolean;
-  quitDisabled: boolean;
-  drawLabel: string;
-  quitLabel: string;
-  onDraw: () => void;
-  onQuit: () => void;
-}
-
-function Sidebar({
-  state,
-  isPlayerTurn,
+function ActionBar({
   isSoloActive,
   drawDisabled,
   quitDisabled,
@@ -292,88 +265,43 @@ function Sidebar({
   quitLabel,
   onDraw,
   onQuit,
-}: SidebarProps) {
+}: {
+  isSoloActive: boolean;
+  drawDisabled: boolean;
+  quitDisabled: boolean;
+  drawLabel: string;
+  quitLabel: string;
+  onDraw: () => void;
+  onQuit: () => void;
+}) {
   return (
-    <aside className="game-sidebar">
-      <header className="sidebar-header">
-        <span className="sidebar-title">웨일 카드게임</span>
-        <span className="sidebar-meta">4인 1판</span>
-      </header>
-      <div className="sidebar-players">
-        {state.players.map((p, i) => (
-          <SidebarPlayerRow
-            key={p.name}
-            player={p}
-            active={
-              state.currentTurn === i && !p.quitted && state.phase === "playing"
-            }
-          />
-        ))}
-      </div>
-      <div className="sidebar-actions">
-        <div className="sidebar-actions-row">
-          <button
-            className="cta-btn cta-btn-primary"
-            disabled={drawDisabled}
-            onClick={onDraw}
-          >
-            {drawLabel}
-          </button>
-          <button
-            className="cta-btn cta-btn-danger"
-            disabled={quitDisabled}
-            onClick={onQuit}
-          >
-            {quitLabel}
-          </button>
+    <>
+      <button
+        type="button"
+        className="cta-btn cta-btn-danger absolute bottom-4 left-4 z-20"
+        disabled={quitDisabled}
+        onClick={onQuit}
+      >
+        {quitLabel}
+      </button>
+      <button
+        type="button"
+        className="cta-btn cta-btn-primary absolute bottom-4 right-4 z-20"
+        disabled={drawDisabled}
+        onClick={onDraw}
+      >
+        {drawLabel}
+      </button>
+      {isSoloActive && (
+        <div className="absolute bottom-20 right-4 z-20 rounded-md bg-black/60 px-2 py-1 text-xs font-semibold text-white">
+          혼자 남았어요 — 낼 수 있는 카드만
         </div>
-        {isPlayerTurn && isSoloActive && (
-          <p className="sidebar-hint muted">혼자 남았어요 — 낼 수 있는 카드만</p>
-        )}
-      </div>
-    </aside>
+      )}
+    </>
   );
 }
 
-function SidebarPlayerRow({
-  player,
-  active,
-}: {
-  player: Player;
-  active: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "player-row",
-        active && "active",
-        player.quitted && "quitted",
-        player.isPlayer && "is-player"
-      )}
-    >
-      {player.char ? (
-        <img
-          src={CHAR_IMAGES[player.char]}
-          alt={player.name}
-          className="player-row-avatar"
-        />
-      ) : (
-        <span className="player-row-avatar emoji" aria-hidden>
-          😀
-        </span>
-      )}
-      <div className="player-row-text">
-        <span className="player-row-name">
-          {player.name}
-          {player.isPlayer && " (나)"}
-          {player.quitted && <span className="player-row-quit"> · 그만</span>}
-        </span>
-        <span className="player-row-meta">{metaForBadge(player.lastAction)}</span>
-      </div>
-      <span className="player-row-score">{player.hand.length}장</span>
-    </div>
-  );
-}
+// ===== 서브 컴포넌트 =====
 
 function DeckStack({ count }: { count: number }) {
   return (

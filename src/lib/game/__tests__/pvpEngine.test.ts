@@ -10,10 +10,10 @@ import {
 import type { ActionEnvelope } from "@/lib/pvp/schema";
 
 const seedConfig = {
-  hostName: "P1",
-  guestName: "P2",
-  hostUid: "uid-host",
-  guestUid: "uid-guest",
+  humans: [
+    { name: "P1", uid: "uid-host" },
+    { name: "P2", uid: "uid-guest" },
+  ],
 };
 
 function envelope(

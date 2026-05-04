@@ -178,46 +178,48 @@ function CompactRule04() {
 
 function CompactRule05() {
   return (
-    <div className="text-center max-w-[560px] mx-auto px-4">
-      <span className="eyebrow mb-3">RULE 05 · 승리 조건</span>
-      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2 mb-3">
+    <div className="text-center max-w-[440px] mx-auto px-4">
+      <span className="eyebrow mb-2">RULE 05 · 승리 조건</span>
+      <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight mt-2 mb-2">
         네 명이 모여서 한 판
       </h2>
-      <p className="text-sm sm:text-base text-(--color-text-secondary) mb-5">
+      <p className="text-xs sm:text-sm text-(--color-text-secondary) mb-4">
         손님 + 웨일프렌즈 <strong className="text-(--color-text)">3명</strong>이 한 테이블에서 한 판.
         손에 남은 카드 점수가{" "}
         <strong className="text-(--color-text)">가장 낮은 사람이 1등!</strong>
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        <div className="surface-card accent text-left px-5 py-5">
-          <div className="text-[11px] font-bold tracking-[0.12em] text-(--color-accent-deep) mb-2">
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="surface-card accent text-left px-2.5 py-2.5">
+          <div className="text-[10px] font-bold tracking-[0.1em] text-(--color-accent-deep) mb-1">
             1등
           </div>
-          <div className="font-extrabold text-lg mb-1">최고 상품</div>
-          <p className="text-sm text-(--color-text-secondary)">
+          <div className="font-extrabold text-sm mb-0.5">최고 상품</div>
+          <p className="text-[11px] leading-snug text-(--color-text-secondary)">
             키캡 + 인형 <strong className="text-(--color-text)">둘 다</strong>
           </p>
         </div>
-        <div className="surface-card text-left px-5 py-5">
-          <div className="text-[11px] font-bold tracking-[0.12em] text-(--color-text-muted) mb-2">
+        <div className="surface-card text-left px-2.5 py-2.5">
+          <div className="text-[10px] font-bold tracking-[0.1em] text-(--color-text-muted) mb-1">
             2 · 3등
           </div>
-          <div className="font-extrabold text-lg mb-1">기념 상품</div>
-          <p className="text-sm text-(--color-text-secondary)">
-            키캡 또는 인형 중 <strong className="text-(--color-text)">1개 택1</strong>
+          <div className="font-extrabold text-sm mb-0.5">기념 상품</div>
+          <p className="text-[11px] leading-snug text-(--color-text-secondary)">
+            키캡 / 인형 <strong className="text-(--color-text)">택 1</strong>
           </p>
         </div>
-        <div className="surface-card muted text-left px-5 py-5">
-          <div className="text-[11px] font-bold tracking-[0.12em] text-(--color-text-muted) mb-2">
+        <div className="surface-card muted text-left px-2.5 py-2.5">
+          <div className="text-[10px] font-bold tracking-[0.1em] text-(--color-text-muted) mb-1">
             4등
           </div>
-          <div className="font-extrabold text-lg mb-1">꽝</div>
-          <p className="text-sm text-(--color-text-secondary)">다음에 또 도전해주세요!</p>
+          <div className="font-extrabold text-sm mb-0.5">꽝</div>
+          <p className="text-[11px] leading-snug text-(--color-text-secondary)">
+            다음에 또 도전!
+          </p>
         </div>
       </div>
 
-      <p className="text-sm text-(--color-text-muted)">
+      <p className="text-xs text-(--color-text-muted)">
         부스에서 운영진 안내에 따라 게임을 시작하세요
       </p>
     </div>

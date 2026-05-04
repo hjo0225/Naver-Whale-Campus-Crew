@@ -1,6 +1,7 @@
 {
   "rules": {
     "rooms": {
+      ".read": "auth != null",
       "$code": {
         ".read": "auth != null",
         "meta": {
@@ -12,6 +13,12 @@
           },
           "p1": {
             ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid) && root.child('rooms').child($code).child('meta/status').val() === 'waiting'"
+          },
+          "p2": {
+            ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid) && root.child('rooms').child($code).child('meta/status').val() === 'waiting'"
+          },
+          "p3": {
+            ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid) && root.child('rooms').child($code).child('meta/status').val() === 'waiting'"
           }
         },
         "state": {
@@ -19,7 +26,7 @@
         },
         "actions": {
           "$pushKey": {
-            ".write": "auth != null && newData.child('by').val() === auth.uid && (root.child('rooms').child($code).child('slots/p0/uid').val() === auth.uid || root.child('rooms').child($code).child('slots/p1/uid').val() === auth.uid)"
+            ".write": "auth != null && newData.child('by').val() === auth.uid && (root.child('rooms').child($code).child('slots/p0/uid').val() === auth.uid || root.child('rooms').child($code).child('slots/p1/uid').val() === auth.uid || root.child('rooms').child($code).child('slots/p2/uid').val() === auth.uid || root.child('rooms').child($code).child('slots/p3/uid').val() === auth.uid)"
           }
         },
         "presence": {

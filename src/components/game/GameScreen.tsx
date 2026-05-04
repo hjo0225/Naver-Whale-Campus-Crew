@@ -7,7 +7,7 @@ import { GameBoard } from "./GameBoard";
 import { FinalResultScreen } from "./FinalResultScreen";
 import { EndSplash } from "./EndSplash";
 
-const SPLASH_MS = 1800;
+const SPLASH_MS = 3000;
 
 export function GameScreen() {
   const state = useGameStore((s) => s.state);

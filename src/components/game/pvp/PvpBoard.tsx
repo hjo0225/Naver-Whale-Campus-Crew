@@ -1,21 +1,36 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
 import { Card, CardBack } from "@/components/game/Card";
 import { canPlay } from "@/lib/game/rules";
 import { canPlayerDraw, canPlayerQuit, isMyTurn } from "@/lib/pvp/engine";
-import type { RoomPlayer, RoomState } from "@/lib/pvp/schema";
+import type { RoomPlayer } from "@/lib/pvp/schema";
 import { CHAR_IMAGES } from "@/lib/game/data";
 import { selectMySeat, usePvpStore } from "@/lib/store/pvpStore";
 import { cn } from "@/lib/utils";
 
 type VisualPos = "bottom" | "top" | "left" | "right";
 
-/** mySeat 기준 4개 좌석을 시각 위치로 매핑. 두 사람은 항상 위/아래에 마주 본다. */
-function visualOrder(mySeat: 0 | 1): Record<VisualPos, number> {
-  if (mySeat === 0) return { bottom: 0, top: 1, left: 2, right: 3 };
-  return { bottom: 1, top: 0, left: 3, right: 2 };
+/** 좌석 0~3 사람 플레이어 식별용 동물 이모지. */
+const SEAT_EMOJIS = ["🐳", "🦊", "🐻", "🐰"] as const;
+function seatEmoji(seat: number): string {
+  return SEAT_EMOJIS[seat] ?? "🐳";
+}
+
+/**
+ * mySeat 기준 4 좌석을 시각 위치로 매핑.
+ * 항상 하단=나, 나머지는 (mySeat+1, mySeat+2, mySeat+3) 순으로
+ * left → top → right 위치에 배치 (시계 방향 흐름).
+ */
+function visualOrder(mySeat: number, total: number): Record<VisualPos, number> {
+  // 안전: total은 항상 4 (사람 2~4 + NPC = 4)
+  const next = (k: number) => (mySeat + k) % total;
+  return {
+    bottom: mySeat,
+    left: next(1),
+    top: next(2),
+    right: next(3),
+  };
 }
 
 function fanRotate(i: number, total: number): number {
@@ -31,16 +46,15 @@ export function PvpBoard() {
   const playCard = usePvpStore((s) => s.playCard);
   const drawCard = usePvpStore((s) => s.drawCard);
   const quit = usePvpStore((s) => s.quit);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const state = room?.state;
   if (!state || mySeat === null) return null;
 
-  const order = visualOrder(mySeat);
+  const order = visualOrder(mySeat, state.players.length);
   const me = state.players[order.bottom]!;
-  const oppHuman = state.players[order.top]!;
-  const npcLeft = state.players[order.left]!;
-  const npcRight = state.players[order.right]!;
+  const topP = state.players[order.top]!;
+  const leftP = state.players[order.left]!;
+  const rightP = state.players[order.right]!;
 
   const myTurn = isMyTurn(state, order.bottom);
   const drawDisabled = !canPlayerDraw(state, order.bottom);
@@ -48,13 +62,6 @@ export function PvpBoard() {
 
   return (
     <div className="game-shell">
-      <PvpSidebar
-        state={state}
-        mySeat={order.bottom}
-        open={sidebarOpen}
-        onToggle={() => setSidebarOpen((v) => !v)}
-      />
-
       <div className="game-area">
         <div className="game-table-wrap">
           <div className="game-table">
@@ -87,12 +94,20 @@ export function PvpBoard() {
               </div>
             </div>
 
-            {/* 상단 — 상대 사람 (뒷면) */}
-            <OpponentHand player={oppHuman} pos="top" hidden />
+            {/* 상단 / 좌우 — 다른 플레이어 (사람·NPC 모두 뒷면) */}
+            <OpponentHand player={topP} pos="top" hidden />
+            <OpponentHand player={leftP} pos="left" hidden />
+            <OpponentHand player={rightP} pos="right" hidden />
 
-            {/* 좌우 — NPC 2명 (뒷면) */}
-            <OpponentHand player={npcLeft} pos="left" hidden />
-            <OpponentHand player={npcRight} pos="right" hidden />
+            {/* 테이블 내부 좌하단 — 그만하기 / 우하단 — 카드 뽑기 */}
+            <PvpActionBar
+              myTurn={myTurn}
+              drawDisabled={drawDisabled}
+              quitDisabled={quitDisabled}
+              deckEmpty={state.deck.length === 0}
+              onDraw={() => void drawCard()}
+              onQuit={() => void quit()}
+            />
 
             {/* 하단 — 나 (앞면, 클릭 가능) */}
             <div
@@ -148,22 +163,12 @@ export function PvpBoard() {
             </div>
           </div>
 
-          {/* 보드 위 액션 바 (사이드바와 분리) */}
-          <PvpActionBar
-            myTurn={myTurn}
-            drawDisabled={drawDisabled}
-            quitDisabled={quitDisabled}
-            deckEmpty={state.deck.length === 0}
-            onDraw={() => void drawCard()}
-            onQuit={() => void quit()}
-          />
-
           {/* 보드 외부 4변 — 누구 자리인지 라벨 */}
           <div className="hand-chip-layer">
-            <SeatChip player={oppHuman} pos="top" />
-            <SeatChip player={npcLeft} pos="left" />
-            <SeatChip player={npcRight} pos="right" />
-            <SeatChip player={me} pos="bottom" isMe />
+            <SeatChip player={topP} seat={order.top} pos="top" />
+            <SeatChip player={leftP} seat={order.left} pos="left" />
+            <SeatChip player={rightP} seat={order.right} pos="right" />
+            <SeatChip player={me} seat={order.bottom} pos="bottom" isMe />
           </div>
         </div>
       </div>
@@ -280,10 +285,12 @@ function OpponentHand({
 
 function SeatChip({
   player,
+  seat,
   pos,
   isMe,
 }: {
   player: RoomPlayer;
+  seat: number;
   pos: VisualPos;
   isMe?: boolean;
 }) {
@@ -294,95 +301,29 @@ function SeatChip({
     right: "left-full ml-3 top-1/2 -translate-y-1/2",
   }[pos];
 
+  // 사람 = 좌석 동물 이모지 / NPC = 웨일프렌즈 캐릭터 이미지
+  const avatar = player.isPlayer ? (
+    <span className="hand-chip-avatar emoji" aria-hidden>
+      {seatEmoji(seat)}
+    </span>
+  ) : player.char ? (
+    <span className="hand-chip-avatar">
+      <img src={CHAR_IMAGES[player.char]} alt="" />
+    </span>
+  ) : (
+    <span className="hand-chip-avatar emoji" aria-hidden>
+      🤖
+    </span>
+  );
+
   return (
     <div className={cn("hand-chip", positionClass)}>
-      {player.char ? (
-        <span className="hand-chip-avatar">
-          <img src={CHAR_IMAGES[player.char]} alt="" />
-        </span>
-      ) : (
-        <span className="hand-chip-avatar emoji" aria-hidden>
-          😀
-        </span>
-      )}
-      <span>
+      {avatar}
+      <span className="text-xs font-medium">
         {player.name}
         {isMe && " (나)"}
       </span>
     </div>
-  );
-}
-
-function PvpSidebar({
-  state,
-  mySeat,
-  open,
-  onToggle,
-}: {
-  state: RoomState;
-  mySeat: number;
-  open: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <aside className={cn("game-sidebar pvp-sidebar", !open && "collapsed")}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="pvp-sidebar-toggle"
-        aria-label={open ? "사이드바 접기" : "사이드바 펼치기"}
-      >
-        {open ? "◀" : "▶"}
-      </button>
-      {open && (
-        <>
-          <header className="sidebar-header">
-            <span className="sidebar-title">PvP 4인전</span>
-            <span className="sidebar-meta">
-              {state.phase === "playing" ? `턴: ${state.players[state.currentTurn]?.name ?? "-"}` : "—"}
-            </span>
-          </header>
-          <div className="sidebar-players">
-            {state.players.map((p, i) => (
-              <div
-                key={p.name}
-                className={cn(
-                  "player-row",
-                  state.currentTurn === i && !p.quitted && state.phase === "playing" && "active",
-                  p.quitted && "quitted",
-                  i === mySeat && "is-player"
-                )}
-              >
-                {p.char ? (
-                  <img src={CHAR_IMAGES[p.char]} alt={p.name} className="player-row-avatar" />
-                ) : (
-                  <span className="player-row-avatar emoji" aria-hidden>
-                    {p.isPlayer ? "🙂" : "🤖"}
-                  </span>
-                )}
-                <div className="player-row-text">
-                  <span className="player-row-name">
-                    {p.name}
-                    {i === mySeat && " (나)"}
-                    {p.quitted && <span className="player-row-quit"> · 그만</span>}
-                  </span>
-                  <span className="player-row-meta">
-                    {p.lastAction === null
-                      ? "대기"
-                      : p.lastAction.type === "play"
-                        ? `방금 ${p.lastAction.card.value === "LLAMA" ? "라마" : p.lastAction.card.value}`
-                        : p.lastAction.type === "draw"
-                          ? "방금 뽑기"
-                          : "그만"}
-                  </span>
-                </div>
-                <span className="player-row-score">{p.hand.length}장</span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </aside>
   );
 }
 
@@ -403,23 +344,23 @@ function PvpActionBar({
 }) {
   const drawLabel = !myTurn ? "🃏 카드 뽑기" : deckEmpty ? "덱 비었음" : "🃏 카드 뽑기";
   return (
-    <div className="pvp-action-bar">
+    <>
       <button
         type="button"
-        className="cta-btn cta-btn-primary"
-        disabled={drawDisabled}
-        onClick={onDraw}
-      >
-        {drawLabel}
-      </button>
-      <button
-        type="button"
-        className="cta-btn cta-btn-danger"
+        className="cta-btn cta-btn-danger absolute bottom-4 left-4 z-20"
         disabled={quitDisabled}
         onClick={onQuit}
       >
         ✋ 그만하기
       </button>
-    </div>
+      <button
+        type="button"
+        className="cta-btn cta-btn-primary absolute bottom-4 right-4 z-20"
+        disabled={drawDisabled}
+        onClick={onDraw}
+      >
+        {drawLabel}
+      </button>
+    </>
   );
 }

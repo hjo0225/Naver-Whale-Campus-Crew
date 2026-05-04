@@ -7,44 +7,42 @@ import type { Card, RoundHistoryEntry } from "@/lib/game/types";
 
 import type { ActionEnvelope, RoomPlayer, RoomState } from "./schema";
 
+export interface PvpHumanSeat {
+  /** 표기명 (P1, P2 …) */
+  name: string;
+  uid: string;
+}
+
 export interface PvpSeatConfig {
-  /** 호스트 슬롯의 사람 표기명 */
-  hostName: string;
-  /** 게스트 슬롯의 사람 표기명 */
-  guestName: string;
-  hostUid: string;
-  guestUid: string;
+  /** 사람 좌석. 길이 2~4. 0번이 호스트. */
+  humans: PvpHumanSeat[];
 }
 
 /**
- * 새 PvP 게임 state 생성. 호스트가 양쪽 슬롯 채워진 직후 호출.
- * 좌석 배치: seat 0=host(사람), seat 1=guest(사람), seat 2~3=NPC(opponents 앞 2개).
+ * 새 PvP 게임 state 생성. 호스트가 "시작" 누르는 시점에 호출.
+ * 좌석 배치: 0..humans.length-1 = 사람, 그 뒤 NPC가 4명까지 채움.
  */
-export function buildInitialState(seat: PvpSeatConfig): RoomState {
-  const opponents = CONFIG.opponents.slice(0, 2);
+export function buildInitialState(cfg: PvpSeatConfig): RoomState {
+  const humans = cfg.humans;
+  if (humans.length < 2 || humans.length > 4) {
+    throw new Error(`PvP는 사람 2~4명 필요 (현재 ${humans.length})`);
+  }
+  const npcCount = 4 - humans.length;
+  const opponents = CONFIG.opponents.slice(0, npcCount);
+
   const players: RoomPlayer[] = [
-    {
-      seat: 0,
-      name: seat.hostName,
+    ...humans.map<RoomPlayer>((h, i) => ({
+      seat: i,
+      name: h.name,
       isPlayer: true,
-      uid: seat.hostUid,
+      uid: h.uid,
       char: null,
       hand: [],
       quitted: false,
       lastAction: null,
-    },
-    {
-      seat: 1,
-      name: seat.guestName,
-      isPlayer: true,
-      uid: seat.guestUid,
-      char: null,
-      hand: [],
-      quitted: false,
-      lastAction: null,
-    },
+    })),
     ...opponents.map<RoomPlayer>((opp, i) => ({
-      seat: 2 + i,
+      seat: humans.length + i,
       name: opp.name,
       isPlayer: false,
       uid: null,

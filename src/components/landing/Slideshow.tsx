@@ -133,18 +133,16 @@ function GameStartSlide() {
       <div className="flex flex-col items-center gap-3">
         <Link
           href="/rules/"
-          className="cta-btn cta-btn-primary cta-btn-pill !bg-white !text-(--color-brand-deep)"
+          className="cta-btn cta-btn-primary cta-btn-pill !bg-white !text-(--color-brand-deep) min-w-[220px] justify-center"
         >
           싱글 플레이 ▶
         </Link>
-        {/* PvP 대전 진입 — RTDB 셋업/부스 운영 정리 후 다시 노출.
         <Link
-          href="/game/pvp/"
-          className="cta-btn cta-btn-pill !bg-(--color-brand-cyan) !text-white"
+          href="/game/pvp/rules/"
+          className="cta-btn cta-btn-primary cta-btn-pill !bg-white !text-(--color-brand-deep) min-w-[220px] justify-center"
         >
-          🤝 PvP 대전 (노트북 2대)
+          PvP 대전 ▶
         </Link>
-        */}
       </div>
     </div>
   );

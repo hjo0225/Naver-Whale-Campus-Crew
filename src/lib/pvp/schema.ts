@@ -15,16 +15,22 @@ export interface RoomMeta {
   createdAt: number;
   hostUid: string;
   status: RoomStatus;
+  /** 호스트가 시작 누른 시점 잡힌 사람 수 (2~4). state 빌드에 그대로 사용. */
+  startedWith?: number | null;
 }
 
 export interface RoomSlots {
   p0?: SlotEntry | null;
   p1?: SlotEntry | null;
+  p2?: SlotEntry | null;
+  p3?: SlotEntry | null;
 }
 
 export interface SlotEntry {
   uid: string;
   joinedAt: number;
+  /** 손님이 입력한 닉네임. 없으면 보드 표시는 P1~P4로 폴백. */
+  name?: string;
 }
 
 /** 호스트만 write. 게임의 진행 상태 전체 스냅샷. */
@@ -44,7 +50,7 @@ export interface RoomState {
 }
 
 export interface RoomPlayer {
-  /** 0=호스트, 1=게스트(사람), 2~3=NPC */
+  /** 0..numHumans-1 = 사람 (0=호스트), numHumans..3 = NPC */
   seat: number;
   name: string;
   isPlayer: boolean;
@@ -69,5 +75,13 @@ export interface PresenceEntry {
   lastSeen: number;
 }
 
-/** UI용 슬롯 키 — p0 = 호스트, p1 = 게스트. */
-export type SlotKey = "p0" | "p1";
+/** UI용 슬롯 키 — p0 = 호스트, p1~p3 = 게스트. */
+export type SlotKey = "p0" | "p1" | "p2" | "p3";
+
+export const SLOT_KEYS: readonly SlotKey[] = ["p0", "p1", "p2", "p3"];
+
+/** room.slots에 들어있는 사람 수를 반환 (0~4). */
+export function countSlots(slots: RoomSlots | undefined): number {
+  if (!slots) return 0;
+  return SLOT_KEYS.reduce((acc, k) => (slots[k]?.uid ? acc + 1 : acc), 0);
+}

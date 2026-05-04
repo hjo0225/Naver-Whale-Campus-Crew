@@ -170,7 +170,17 @@ export function Rule04Page() {
   );
 }
 
-export function Rule05Page({ showStartButton = true }: { showStartButton?: boolean } = {}) {
+export function Rule05Page({
+  showStartButton = true,
+  startHref = "/game/",
+  startLabel = "게임 시작하기 →",
+}: {
+  showStartButton?: boolean;
+  /** 시작 버튼이 이동할 경로 (PvP의 경우 /game/pvp/) */
+  startHref?: string;
+  /** 시작 버튼 라벨 (PvP의 경우 "로비 입장 →") */
+  startLabel?: string;
+} = {}) {
   return (
     <div className="text-center max-w-[1200px] mx-auto">
       <span className="eyebrow mb-5">RULE 05 · 승리 조건</span>
@@ -214,8 +224,8 @@ export function Rule05Page({ showStartButton = true }: { showStartButton?: boole
       </p>
 
       {showStartButton && (
-        <Link href="/game/" className="cta-btn cta-btn-primary cta-btn-pill">
-          게임 시작하기 →
+        <Link href={startHref} className="cta-btn cta-btn-primary cta-btn-pill">
+          {startLabel}
         </Link>
       )}
     </div>
@@ -230,6 +240,26 @@ export function RulesScreen() {
       <Rule03Page key="r3" />,
       <Rule04Page key="r4" />,
       <Rule05Page key="r5" />,
+    ],
+    [],
+  );
+
+  return <FullPageSlider pages={pages} mode="wheel" variant="light" />;
+}
+
+/** PvP 모드 진입 전 룰 설명 — 마지막 페이지에서 PvP 로비로 이동. */
+export function PvpRulesScreen() {
+  const pages = useMemo(
+    () => [
+      <Rule01Page key="r1" />,
+      <Rule02Page key="r2" />,
+      <Rule03Page key="r3" />,
+      <Rule04Page key="r4" />,
+      <Rule05Page
+        key="r5"
+        startHref="/game/pvp/"
+        startLabel="로비 입장 →"
+      />,
     ],
     [],
   );

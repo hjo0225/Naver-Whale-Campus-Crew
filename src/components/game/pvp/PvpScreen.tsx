@@ -1,20 +1,37 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { isFirebaseConfigured } from "@/lib/pvp/rtdb";
 import { usePvpStore } from "@/lib/store/pvpStore";
+import { deriveEndReason } from "@/lib/game/rules";
+import type { Player } from "@/lib/game/types";
+import { EndSplash } from "@/components/game/EndSplash";
 import { PvpBoard } from "./PvpBoard";
 import { PvpLobby } from "./PvpLobby";
 import { PvpResultScreen } from "./PvpResultScreen";
 import { PvpWaitingRoom } from "./PvpWaitingRoom";
 
+const SPLASH_MS = 3000;
+
 export default function PvpScreen() {
   const phase = usePvpStore((s) => s.phase);
+  const room = usePvpStore((s) => s.room);
   const init = usePvpStore((s) => s.init);
+  const [splashShown, setSplashShown] = useState(false);
 
   useEffect(() => {
     if (isFirebaseConfigured()) void init();
   }, [init]);
+
+  // 종료 phase 진입 시 SPLASH_MS 동안 EndSplash 노출 후 결과 화면 전이.
+  useEffect(() => {
+    if (phase === "finished") {
+      setSplashShown(true);
+      const t = setTimeout(() => setSplashShown(false), SPLASH_MS);
+      return () => clearTimeout(t);
+    }
+    setSplashShown(false);
+  }, [phase]);
 
   if (!isFirebaseConfigured()) {
     return (
@@ -34,7 +51,20 @@ export default function PvpScreen() {
   if (phase === "lobby") return <PvpLobby />;
   if (phase === "waiting") return <PvpWaitingRoom />;
   if (phase === "playing") return <PvpBoard />;
-  if (phase === "finished") return <PvpResultScreen />;
+  if (phase === "finished") {
+    if (splashShown) {
+      // RoomPlayer는 Player 필드를 모두 포함 (name/hand/quitted/isPlayer/lastAction/char)
+      const players = (room?.state?.players ?? []) as unknown as Player[];
+      const reason = deriveEndReason(players);
+      return (
+        <>
+          <PvpBoard />
+          {reason && <EndSplash reason={reason} />}
+        </>
+      );
+    }
+    return <PvpResultScreen />;
+  }
   if (phase === "aborted") return <PvpAborted />;
   return null;
 }

@@ -20,13 +20,48 @@ import {
   registerPresence,
   setStatus,
   slotKeyForUid,
+  watchOpenRooms,
   watchRoom,
   writeState,
+  type PublicRoomSummary,
 } from "@/lib/pvp/rtdb";
-import type { ActionEnvelope, Room, SlotKey } from "@/lib/pvp/schema";
+import { SLOT_KEYS, countSlots, type ActionEnvelope, type Room, type SlotKey } from "@/lib/pvp/schema";
 
 /** 상대 offline → abort 까지의 유예 시간 (ms). 탭 새로고침 등 일시 끊김 흡수용. */
 const ABORT_GRACE_MS = 30_000;
+
+/** 닉네임 영속 키 — 한 번 입력하면 새로고침/재방문에도 유지. */
+const NICKNAME_KEY = "pvp:nickname";
+/** 코드포인트 기준 최대 길이 (한글/이모지 모두 1글자로 카운트). */
+export const NICKNAME_MAX = 8;
+
+/** trim + 코드포인트 기준 자르기. 빈 문자열이면 그대로 빈 문자열 반환. */
+export function sanitizeNickname(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const arr = Array.from(trimmed);
+  return arr.slice(0, NICKNAME_MAX).join("");
+}
+
+/** 클라이언트에서만 호출 — localStorage에서 닉네임 읽어옴. */
+export function loadStoredNickname(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return sanitizeNickname(window.localStorage.getItem(NICKNAME_KEY) ?? "");
+  } catch {
+    return "";
+  }
+}
+
+function persistNickname(name: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (name) window.localStorage.setItem(NICKNAME_KEY, name);
+    else window.localStorage.removeItem(NICKNAME_KEY);
+  } catch {
+    // localStorage 쓰기 실패는 조용히 무시 (시크릿 모드 등)
+  }
+}
 
 export type PvpPhase = "lobby" | "waiting" | "playing" | "finished" | "aborted";
 
@@ -42,12 +77,23 @@ interface PvpStoreInternal {
   unsubActions: (() => void) | null;
   npcTimer: ReturnType<typeof setTimeout> | null;
   abortTimer: ReturnType<typeof setTimeout> | null;
+  /** 로비에 표시할 모집중인 방 목록 */
+  openRooms: PublicRoomSummary[];
+  unsubLobby: (() => void) | null;
+  /** 손님 닉네임. 빈 문자열이면 미설정 (로비 게이트 노출). */
+  nickname: string;
 }
 
 export interface PvpStore extends PvpStoreInternal {
   init: () => Promise<void>;
   hostNew: () => Promise<void>;
   joinExisting: (input: string) => Promise<void>;
+  /** 호스트가 현재 인원으로 게임 시작 (사람 2~4 + NPC 자동 채움) */
+  startGame: () => Promise<void>;
+  /** 로비 진입 시 모집중 방 목록 구독 시작 */
+  watchLobby: () => Promise<void>;
+  /** 로비 떠날 때 구독 정리 */
+  unwatchLobby: () => void;
   leave: () => Promise<void>;
   /** UI: 사람이 카드 내기 시도 */
   playCard: (handIdx: number) => Promise<void>;
@@ -58,6 +104,8 @@ export interface PvpStore extends PvpStoreInternal {
   /** 운영진: 결과 화면에서 "다음 게임" → 방 정리 + lobby */
   nextGame: () => Promise<void>;
   setError: (msg: string | null) => void;
+  /** 닉네임 갱신 (sanitize 후 저장 + localStorage 영속). */
+  setNickname: (name: string) => void;
 }
 
 function inferPhase(room: Room | null): PvpPhase {
@@ -87,25 +135,29 @@ export const usePvpStore = create<PvpStore>((set, get) => {
   }
 
   /**
-   * 호스트 전용: 상대(p1) presence가 ABORT_GRACE_MS 이상 offline → status=aborted.
-   * presence는 watchRoom의 room.presence로 들어옴.
+   * 호스트 전용: 게임 진행 중인 사람 상대 중 누구라도 ABORT_GRACE_MS 이상 offline → status=aborted.
+   * 대기 중(state 없음) 단계에서는 abort 검사하지 않음 (들어왔다 나가는 자유 허용).
    */
   function maybeScheduleAbort() {
     const { code, mySlot, room } = get();
     if (mySlot !== "p0" || !code) return;
-    if (!room || room.meta?.status === "aborted" || room.meta?.status === "finished") return;
-    const otherUid = room.slots?.p1?.uid;
-    if (!otherUid) return;
-    const presence = room.presence?.[otherUid];
-    if (!presence) return;
-    if (presence.online) {
+    if (!room || room.meta?.status !== "playing") return;
+    const players = room.state?.players ?? [];
+    const otherHumanUids = players
+      .filter((p) => p.isPlayer && p.uid && p.uid !== room.slots?.p0?.uid)
+      .map((p) => p.uid as string);
+    if (otherHumanUids.length === 0) return;
+    const offline = otherHumanUids.find(
+      (u) => room.presence?.[u]?.online === false
+    );
+    if (!offline) {
       clearAbortTimer();
       return;
     }
     if (get().abortTimer) return; // 이미 예약됨
     const t = setTimeout(async () => {
       const cur = get().room;
-      const stillOffline = cur?.presence?.[otherUid]?.online === false;
+      const stillOffline = cur?.presence?.[offline]?.online === false;
       if (stillOffline && cur?.meta?.status !== "finished") {
         await setStatus(code, "aborted").catch(() => {});
       }
@@ -171,28 +223,8 @@ export const usePvpStore = create<PvpStore>((set, get) => {
       const phase = inferPhase(room);
       set({ room, mySlot, phase });
 
-      // 호스트 전이 1: 양쪽 슬롯 다 차고 아직 waiting → 게임 state 초기화 + status=playing
-      if (
-        mySlot === "p0" &&
-        room?.meta?.status === "waiting" &&
-        room?.slots?.p0 &&
-        room?.slots?.p1 &&
-        !room?.state
-      ) {
-        void (async () => {
-          const init = buildInitialState({
-            hostName: "P1",
-            guestName: "P2",
-            hostUid: room.slots.p0!.uid,
-            guestUid: room.slots.p1!.uid,
-          });
-          await writeState(code, init);
-          await setStatus(code, "playing");
-        })();
-        return;
-      }
-
       // 호스트: 매 state 변화마다 NPC 턴 + presence 기반 abort 체크
+      // 게임 시작은 호스트가 startGame() 호출로 명시 트리거.
       if (mySlot === "p0") {
         maybeScheduleNpc();
         maybeScheduleAbort();
@@ -212,6 +244,16 @@ export const usePvpStore = create<PvpStore>((set, get) => {
     unsubActions: null,
     npcTimer: null,
     abortTimer: null,
+    openRooms: [],
+    unsubLobby: null,
+    // SSR 안전 — 초기엔 빈 문자열, mount 후 PvpLobby가 loadStoredNickname 으로 hydrate.
+    nickname: "",
+
+    setNickname: (name) => {
+      const clean = sanitizeNickname(name);
+      persistNickname(clean);
+      set({ nickname: clean });
+    },
 
     init: async () => {
       if (get().uid) return;
@@ -220,11 +262,16 @@ export const usePvpStore = create<PvpStore>((set, get) => {
     },
 
     hostNew: async () => {
+      const nickname = get().nickname;
+      if (!nickname) {
+        set({ error: "닉네임을 먼저 입력해주세요" });
+        return;
+      }
       set({ busy: true, error: null });
       try {
         await get().init();
         const uid = get().uid!;
-        const code = await createRoom(uid);
+        const code = await createRoom(uid, nickname);
         const unsubRoom = attachRoomWatcher(code, uid);
         const unsubActions = startHostActionConsumer(code);
         await registerPresence(code, uid);
@@ -235,17 +282,76 @@ export const usePvpStore = create<PvpStore>((set, get) => {
     },
 
     joinExisting: async (input) => {
+      const nickname = get().nickname;
+      if (!nickname) {
+        set({ error: "닉네임을 먼저 입력해주세요" });
+        return;
+      }
       set({ busy: true, error: null });
       try {
         await get().init();
         const uid = get().uid!;
         const code = input.trim().toUpperCase();
-        await joinRoom(code, uid);
+        const slot = await joinRoom(code, uid, nickname);
         const unsubRoom = attachRoomWatcher(code, uid);
         await registerPresence(code, uid);
-        set({ code, mySlot: "p1", unsubRoom, busy: false });
+        set({ code, mySlot: slot, unsubRoom, busy: false });
       } catch (e) {
         set({ busy: false, error: e instanceof Error ? e.message : String(e) });
+      }
+    },
+
+    watchLobby: async () => {
+      if (get().unsubLobby) return; // 이미 구독중
+      try {
+        await get().init();
+        const unsub = watchOpenRooms((rooms) => set({ openRooms: rooms }));
+        set({ unsubLobby: unsub });
+      } catch (e) {
+        set({ error: e instanceof Error ? e.message : String(e) });
+      }
+    },
+
+    unwatchLobby: () => {
+      const u = get().unsubLobby;
+      if (u) {
+        u();
+        set({ unsubLobby: null, openRooms: [] });
+      }
+    },
+
+    startGame: async () => {
+      const { code, mySlot, room } = get();
+      if (!code || mySlot !== "p0" || !room) return;
+      if (room.meta?.status !== "waiting") return;
+      // 시점 사진 — 시작 누른 시점에 들어와있던 사람들로 좌석 결정.
+      const slots = room.slots;
+      if (!slots) return;
+      // 동명이인 시 결과 매칭이 어긋나지 않도록 suffix `(2)`, `(3)` 부여.
+      const seen = new Map<string, number>();
+      const humans: { uid: string; name: string; key: SlotKey }[] = [];
+      SLOT_KEYS.forEach((k, i) => {
+        const s = slots[k];
+        if (s?.uid) {
+          const base = s.name?.trim() || `P${i + 1}`;
+          const count = (seen.get(base) ?? 0) + 1;
+          seen.set(base, count);
+          const name = count === 1 ? base : `${base}(${count})`;
+          humans.push({ uid: s.uid, name, key: k });
+        }
+      });
+      if (humans.length < 2) {
+        set({ error: "최소 2명이 모여야 시작할 수 있어요" });
+        return;
+      }
+      try {
+        const init = buildInitialState({
+          humans: humans.map((h) => ({ uid: h.uid, name: h.name })),
+        });
+        await writeState(code, init);
+        await setStatus(code, "playing");
+      } catch (e) {
+        set({ error: e instanceof Error ? e.message : String(e) });
       }
     },
 
@@ -266,10 +372,10 @@ export const usePvpStore = create<PvpStore>((set, get) => {
     },
 
     playCard: async (handIdx) => {
-      const { code, uid, mySlot, room } = get();
-      if (!code || !uid || !mySlot) return;
-      const seat = mySlot === "p0" ? 0 : 1;
-      if (room?.state?.currentTurn !== seat) return;
+      const { code, uid, room } = get();
+      if (!code || !uid) return;
+      const seat = seatForUid(room, uid);
+      if (seat === null || room?.state?.currentTurn !== seat) return;
       await pushAction(code, {
         by: uid,
         type: "play",
@@ -280,10 +386,10 @@ export const usePvpStore = create<PvpStore>((set, get) => {
     },
 
     drawCard: async () => {
-      const { code, uid, mySlot, room } = get();
-      if (!code || !uid || !mySlot) return;
-      const seat = mySlot === "p0" ? 0 : 1;
-      if (room?.state?.currentTurn !== seat) return;
+      const { code, uid, room } = get();
+      if (!code || !uid) return;
+      const seat = seatForUid(room, uid);
+      if (seat === null || room?.state?.currentTurn !== seat) return;
       await pushAction(code, {
         by: uid,
         type: "draw",
@@ -293,10 +399,10 @@ export const usePvpStore = create<PvpStore>((set, get) => {
     },
 
     quit: async () => {
-      const { code, uid, mySlot, room } = get();
-      if (!code || !uid || !mySlot) return;
-      const seat = mySlot === "p0" ? 0 : 1;
-      if (room?.state?.currentTurn !== seat) return;
+      const { code, uid, room } = get();
+      if (!code || !uid) return;
+      const seat = seatForUid(room, uid);
+      if (seat === null || room?.state?.currentTurn !== seat) return;
       await pushAction(code, {
         by: uid,
         type: "quit",
@@ -333,8 +439,21 @@ export const usePvpStore = create<PvpStore>((set, get) => {
   };
 });
 
-/** UI 헬퍼 — 컴포넌트에서 selector로 직접 호출. */
-export function selectMySeat(s: PvpStore): 0 | 1 | null {
-  if (!s.mySlot) return null;
-  return s.mySlot === "p0" ? 0 : 1;
+/** state.players에서 uid가 차지한 seat 번호를 찾는다. 게임 시작 전이면 null. */
+export function seatForUid(room: Room | null, uid: string): number | null {
+  const players = room?.state?.players;
+  if (!players) return null;
+  const idx = players.findIndex((p) => p.uid === uid);
+  return idx >= 0 ? idx : null;
+}
+
+/** UI 헬퍼 — 컴포넌트에서 selector로 직접 호출. 게임 시작 전이면 null. */
+export function selectMySeat(s: PvpStore): number | null {
+  if (!s.uid) return null;
+  return seatForUid(s.room, s.uid);
+}
+
+/** 현재 방 인원 수 (사람 슬롯 점유 수). */
+export function selectHumanCount(s: PvpStore): number {
+  return countSlots(s.room?.slots);
 }
