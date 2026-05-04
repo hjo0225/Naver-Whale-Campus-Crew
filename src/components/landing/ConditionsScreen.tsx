@@ -34,49 +34,48 @@ function IntroPage() {
   );
 }
 
-function Step1Page() {
+interface Step1Sub {
+  num: string;
+  title: string;
+  desc: string;
+  img: string;
+}
+
+const STEP1_SUBS: readonly Step1Sub[] = [
+  {
+    num: "1단계",
+    title: "메뉴 열기",
+    desc: "웨일 앱 우측 하단의 ≡ 메뉴 버튼을 눌러주세요.",
+    img: "/referral-1.png",
+  },
+  {
+    num: "2단계",
+    title: "설정 진입",
+    desc: "메뉴에서 설정 아이콘을 눌러 들어갑니다.",
+    img: "/referral-2.png",
+  },
+  {
+    num: "3단계",
+    title: "추천인 코드 선택",
+    desc: "설정 화면 상단의 추천인 코드 메뉴를 눌러주세요.",
+    img: "/referral-3.png",
+  },
+];
+
+function Step1SubPage({ s }: { s: Step1Sub }) {
   return (
-    <div className="grid md:grid-cols-2 gap-10 md:gap-2 items-center">
-      <div>
-        <span className="eyebrow mb-5">STEP 01</span>
-        <h2 className="display-h2 mt-4 mb-6">
-          웨일 앱에서
-          <br />
-          추천인 코드 입력
-        </h2>
-        <p className="text-lg text-(--color-text-secondary) leading-relaxed mb-3">
-          네이버 웨일 앱을 실행하고{" "}
-          <strong className="text-(--color-text)">설정 → 추천인 코드</strong> 메뉴로 이동해주세요.
-        </p>
-        <p className="text-lg text-(--color-text-secondary) leading-relaxed mb-3">
-          안내 화면에서 부스 추천인 코드를 입력하면 등록 완료입니다.
-        </p>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { step: "1", label: "메뉴 열기", img: "/referral-1.png" },
-          { step: "2", label: "설정", img: "/referral-2.png" },
-          { step: "3", label: "추천인 코드", img: "/referral-3.png" },
-        ].map((s) => (
-          <div
-            key={s.step}
-            className="surface-card muted aspect-[9/16] p-2 flex flex-col text-center"
-          >
-            <div className="text-xs font-bold tracking-[0.12em] text-(--color-brand) mb-1.5">
-              STEP {s.step}
-            </div>
-            <div className="flex-1 min-h-0 rounded-md overflow-hidden bg-white border border-(--color-divider) mb-1.5">
-              <img
-                src={s.img}
-                alt={s.label}
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="text-xs sm:text-sm font-semibold leading-relaxed">
-              {s.label}
-            </div>
-          </div>
-        ))}
+    <div className="text-center max-w-[440px] mx-auto flex flex-col items-center">
+      <span className="eyebrow mb-2">STEP 01 · {s.num}</span>
+      <h2 className="display-h2 mt-2 mb-3">{s.title}</h2>
+      <p className="text-base sm:text-lg text-(--color-text-secondary) mb-5">
+        {s.desc}
+      </p>
+      <div className="aspect-[9/16] max-h-[55dvh] rounded-lg overflow-hidden bg-white border border-(--color-divider) shadow-(--shadow-soft)">
+        <img
+          src={s.img}
+          alt={s.title}
+          className="w-full h-full object-contain"
+        />
       </div>
     </div>
   );
@@ -186,7 +185,7 @@ export function ConditionsScreen() {
   const pages = useMemo(
     () => [
       <IntroPage key="intro" />,
-      <Step1Page key="step1" />,
+      ...STEP1_SUBS.map((s, i) => <Step1SubPage key={`step1-${i}`} s={s} />),
       <Step2Page key="step2" onCopy={copyCode} />,
       <Step3Page key="step3" />,
     ],
