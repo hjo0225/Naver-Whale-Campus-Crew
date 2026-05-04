@@ -82,38 +82,49 @@ describe("decideNpcMove — 손패·점수 임계 + 확률 quit", () => {
     expect(decideNpcMove(npc, state)?.type).toBe("draw");
   });
 
-  it("손패 ≤ 5 + 점수 > 10 → draw (큰 손실 회피)", () => {
-    // hand=3장, 점수 12 (3+4+5 unique)
-    const npc = { ...buildState().players[1]!, hand: [make(2), make(3), make(4)] };
+  it("손패 ≤ 5 + 점수 ≥ 5 → draw (큰 손실 회피)", () => {
+    // hand=1장, 점수 5 (캐릭5)
+    const npc = { ...buildState().players[1]!, hand: [make(4)] };
     const state = buildState({ players: [buildState().players[0]!, npc], top: make(0) });
     vi.spyOn(Math, "random").mockReturnValue(0);
     expect(decideNpcMove(npc, state)?.type).toBe("draw");
   });
 
-  it("손패 ≤ 5 + 점수 ≤ 10 + random < 임계 → quit", () => {
-    // hand=2장, 점수 7 (3+4)
-    const npc = { ...buildState().players[1]!, hand: [make(2), make(3)] };
+  it("손패 ≤ 5 + 점수 < 5 + random < 임계 → quit", () => {
+    // hand=1장, 점수 3 (캐릭3)
+    const npc = { ...buildState().players[1]!, hand: [make(2)] };
     const state = buildState({ players: [buildState().players[0]!, npc], top: make(0) });
     vi.spyOn(Math, "random").mockReturnValue(QUIT_PROBABILITY - 0.01);
     expect(decideNpcMove(npc, state)?.type).toBe("quit");
   });
 
-  it("손패 ≤ 5 + 점수 ≤ 10 + random ≥ 임계 → draw", () => {
-    const npc = { ...buildState().players[1]!, hand: [make(2), make(3)] };
+  it("손패 ≤ 5 + 점수 < 5 + random ≥ 임계 → draw", () => {
+    const npc = { ...buildState().players[1]!, hand: [make(2)] };
     const state = buildState({ players: [buildState().players[0]!, npc], top: make(0) });
     vi.spyOn(Math, "random").mockReturnValue(QUIT_PROBABILITY);
     expect(decideNpcMove(npc, state)?.type).toBe("draw");
   });
 
-  it("손패 = 5 (경계값) + 점수 ≤ 10 + random < 임계 → quit", () => {
-    // values 3,3,4,4,4 → unique {3,4} → 점수 7
+  it("손패 = 5 (경계값) + 점수 < 5 + random < 임계 → quit", () => {
+    // values 3,3,3,3,3 → unique {3} → 점수 3
     const npc = {
       ...buildState().players[1]!,
-      hand: [make(2), make(2, 1), make(3), make(3, 1), make(3, 2)],
+      hand: [make(2), make(2, 1), make(2, 2), make(2, 3), make(2, 4)],
     };
     const state = buildState({ players: [buildState().players[0]!, npc], top: make(0) });
     vi.spyOn(Math, "random").mockReturnValue(0);
     expect(decideNpcMove(npc, state)?.type).toBe("quit");
+  });
+
+  it("손패 = 5 (경계값) + 점수 = 5 (경계값) → draw (5점 이상 quit 안 함)", () => {
+    // values 5,5,5,5,5 → unique {5} → 점수 5
+    const npc = {
+      ...buildState().players[1]!,
+      hand: [make(4), make(4, 1), make(4, 2), make(4, 3), make(4, 4)],
+    };
+    const state = buildState({ players: [buildState().players[0]!, npc], top: make(0) });
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    expect(decideNpcMove(npc, state)?.type).toBe("draw");
   });
 
   it("손패 = 6 (경계값+1) → draw", () => {

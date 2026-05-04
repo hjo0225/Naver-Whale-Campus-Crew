@@ -23,13 +23,14 @@ function seatEmoji(seat: number): string {
  * left → top → right 위치에 배치 (시계 방향 흐름).
  */
 function visualOrder(mySeat: number, total: number): Record<VisualPos, number> {
-  // 안전: total은 항상 4 (사람 2~4 + NPC = 4)
-  const next = (k: number) => (mySeat + k) % total;
+  // 안전: total은 항상 4 (사람 2~4 + NPC = 4).
+  // 내부 arrow 함수로 mod 연산을 추출하면 SWC inline 버그로 minified 빌드에서
+  // `ReferenceError: total is not defined` 발생 → 평탄화 형태 유지.
   return {
     bottom: mySeat,
-    left: next(1),
-    top: next(2),
-    right: next(3),
+    left: (mySeat + 1) % total,
+    top: (mySeat + 2) % total,
+    right: (mySeat + 3) % total,
   };
 }
 

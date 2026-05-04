@@ -11,12 +11,23 @@ export interface Room {
 
 export type RoomStatus = "waiting" | "playing" | "finished" | "aborted";
 
+/**
+ * 방이 중단된 사유.
+ *  - host-left: 호스트가 게임 중 명시적으로 나감
+ *  - host-end: 호스트가 결과 화면에서 "다음 게임" 또는 정상 종료
+ *  - host-disconnect: 호스트의 창이 닫히거나 네트워크 끊김 (onDisconnect 발동 → 방 자체 삭제)
+ *  - player-left: 게스트 한 명이 게임 중 떠나거나 끊김
+ */
+export type AbortReason = "host-left" | "host-end" | "host-disconnect" | "player-left";
+
 export interface RoomMeta {
   createdAt: number;
   hostUid: string;
   status: RoomStatus;
   /** 호스트가 시작 누른 시점 잡힌 사람 수 (2~4). state 빌드에 그대로 사용. */
   startedWith?: number | null;
+  /** status === "aborted" 일 때만 의미. 모달 메시지 분기에 사용. */
+  abortReason?: AbortReason | null;
 }
 
 export interface RoomSlots {

@@ -26,6 +26,7 @@ import {
 import {
   SLOT_KEYS,
   countSlots,
+  type AbortReason,
   type Room,
   type RoomState,
   type ActionEnvelope,
@@ -228,6 +229,14 @@ export async function setStatus(code: string, status: Room["meta"]["status"]): P
   await update(ref(getDb(), `rooms/${code}/meta`), { status });
 }
 
+/** 호스트만 호출. status=aborted + abortReason 동시 기록 — 모달 메시지 분기용. */
+export async function abortRoom(code: string, reason: AbortReason): Promise<void> {
+  await update(ref(getDb(), `rooms/${code}/meta`), {
+    status: "aborted",
+    abortReason: reason,
+  });
+}
+
 /** 양쪽 모두 호출 가능. 자기 액션을 큐에 push. */
 export async function pushAction(code: string, action: ActionEnvelope): Promise<void> {
   await push(ref(getDb(), `rooms/${code}/actions`), action);
@@ -245,9 +254,54 @@ export async function registerPresence(code: string, uid: string): Promise<void>
   await onDisconnect(pRef).set({ online: false, lastSeen: serverTimestamp() });
 }
 
+/**
+ * 호스트의 비정상 종료(창 닫기/네트워크) 대비. Firebase 서버가 disconnect를 감지하면
+ * 방 자체를 자동 삭제 → 게스트들은 watchRoom 에서 null 받음 → 클라이언트에서
+ * "host-disconnect" 추론하여 모달 표시.
+ */
+export async function registerHostDisconnectCleanup(code: string): Promise<void> {
+  await onDisconnect(roomRef(code)).remove();
+}
+
+/**
+ * 게스트의 비정상 종료(창 닫기/네트워크) 대비 — waiting 상태에서만 의미가 있음.
+ * 게임 시작 후에는 cancelGuestSlotDisconnect 로 취소하여 좌석을 유지해야 함
+ * (state.players에 이미 잡혀 있어서 슬롯이 사라지면 NPC 매핑이 깨짐).
+ */
+export async function registerGuestSlotDisconnect(
+  code: string,
+  slot: SlotKey,
+): Promise<void> {
+  await onDisconnect(ref(getDb(), `rooms/${code}/slots/${slot}`)).remove();
+}
+
+export async function cancelGuestSlotDisconnect(
+  code: string,
+  slot: SlotKey,
+): Promise<void> {
+  await onDisconnect(ref(getDb(), `rooms/${code}/slots/${slot}`)).cancel();
+}
+
+export async function cancelHostDisconnectCleanup(code: string): Promise<void> {
+  await onDisconnect(roomRef(code)).cancel();
+}
+
 /** 운영진이 방을 닫을 때 (또는 cleanup). */
 export async function deleteRoom(code: string): Promise<void> {
   await remove(roomRef(code));
+}
+
+/** 게스트가 waiting에서 자기 슬롯을 비울 때. */
+export async function clearMySlot(code: string, slot: SlotKey): Promise<void> {
+  await remove(ref(getDb(), `rooms/${code}/slots/${slot}`));
+}
+
+/** 게스트가 leave 직전에 자기 presence를 명시적으로 offline으로. */
+export async function setPresenceOffline(code: string, uid: string): Promise<void> {
+  await set(ref(getDb(), `rooms/${code}/presence/${uid}`), {
+    online: false,
+    lastSeen: serverTimestamp(),
+  });
 }
 
 export function slotKeyForUid(room: Room | null, uid: string): SlotKey | null {

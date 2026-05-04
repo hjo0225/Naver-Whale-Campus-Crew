@@ -5,6 +5,7 @@ import { isFirebaseConfigured } from "@/lib/pvp/rtdb";
 import { usePvpStore } from "@/lib/store/pvpStore";
 import { deriveEndReason } from "@/lib/game/rules";
 import type { Player } from "@/lib/game/types";
+import type { AbortReason } from "@/lib/pvp/schema";
 import { EndSplash } from "@/components/game/EndSplash";
 import { PvpBoard } from "./PvpBoard";
 import { PvpLobby } from "./PvpLobby";
@@ -12,11 +13,14 @@ import { PvpResultScreen } from "./PvpResultScreen";
 import { PvpWaitingRoom } from "./PvpWaitingRoom";
 
 const SPLASH_MS = 3000;
+/** abort 모달 자동 닫고 lobby 로 복귀하기까지의 시간 (ms). */
+const ABORT_AUTO_LEAVE_MS = 3000;
 
 export default function PvpScreen() {
   const phase = usePvpStore((s) => s.phase);
   const room = usePvpStore((s) => s.room);
   const init = usePvpStore((s) => s.init);
+  const wake = usePvpStore((s) => s.wake);
   const [splashShown, setSplashShown] = useState(false);
 
   useEffect(() => {
@@ -32,6 +36,16 @@ export default function PvpScreen() {
     }
     setSplashShown(false);
   }, [phase]);
+
+  // 백그라운드 throttle 회복 — 탭이 다시 활성화될 때 NPC/abort 스케줄 재진입.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onVisibilityChange = () => {
+      if (!document.hidden) wake();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [wake]);
 
   if (!isFirebaseConfigured()) {
     return (
@@ -74,29 +88,67 @@ export default function PvpScreen() {
   return null;
 }
 
+const ABORT_MESSAGES: Record<AbortReason, { title: string; body: string }> = {
+  "host-left": {
+    title: "방장이 게임을 떠났어요",
+    body: "방이 닫혔습니다. 잠시 후 로비로 돌아갑니다.",
+  },
+  "host-disconnect": {
+    title: "방장 연결이 끊겼어요",
+    body: "방이 닫혔습니다. 잠시 후 로비로 돌아갑니다.",
+  },
+  "player-left": {
+    title: "참가자가 게임을 떠났어요",
+    body: "게임을 중단하고 잠시 후 로비로 돌아갑니다.",
+  },
+  "host-end": {
+    title: "게임이 종료됐어요",
+    body: "잠시 후 로비로 돌아갑니다.",
+  },
+};
+
+const ABORT_FALLBACK = {
+  title: "게임이 중단됐어요",
+  body: "잠시 후 로비로 돌아갑니다.",
+};
+
 function PvpAborted() {
   const leave = usePvpStore((s) => s.leave);
+  const reason = usePvpStore((s) => s.abortReason);
+  const msg = (reason && ABORT_MESSAGES[reason]) ?? ABORT_FALLBACK;
+
+  // 자동 3초 후 lobby 복귀
+  useEffect(() => {
+    const t = setTimeout(() => {
+      void leave();
+    }, ABORT_AUTO_LEAVE_MS);
+    return () => clearTimeout(t);
+  }, [leave]);
+
   return (
     <div
       className="flex min-h-screen items-center justify-center px-6"
       style={{ background: "var(--brand-grad)" }}
     >
       <div className="surface-card w-full max-w-md text-center" style={{ padding: "2rem" }}>
+        <div className="text-5xl mb-3" aria-hidden>
+          ✋
+        </div>
         <h2
           className="mb-2 text-xl font-extrabold tracking-tight"
           style={{ color: "var(--color-text)" }}
         >
-          게임이 중단됐어요
+          {msg.title}
         </h2>
         <p className="mb-6 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          상대 연결이 끊겼거나 운영진이 방을 닫았습니다.
+          {msg.body}
         </p>
         <button
           type="button"
           onClick={() => void leave()}
           className="cta-btn cta-btn-primary"
         >
-          로비로
+          지금 로비로
         </button>
       </div>
     </div>

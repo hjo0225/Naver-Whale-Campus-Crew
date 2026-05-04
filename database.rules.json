@@ -4,6 +4,7 @@
       ".read": "auth != null",
       "$code": {
         ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.exists()) || (data.exists() && !newData.exists() && data.child('meta/hostUid').val() === auth.uid))",
         "meta": {
           ".write": "auth != null && (!data.exists() || data.child('hostUid').val() === auth.uid)"
         },
@@ -25,6 +26,7 @@
           ".write": "auth != null && root.child('rooms').child($code).child('meta/hostUid').val() === auth.uid"
         },
         "actions": {
+          ".write": "auth != null && !newData.exists() && root.child('rooms').child($code).child('meta/hostUid').val() === auth.uid",
           "$pushKey": {
             ".write": "auth != null && newData.child('by').val() === auth.uid && (root.child('rooms').child($code).child('slots/p0/uid').val() === auth.uid || root.child('rooms').child($code).child('slots/p1/uid').val() === auth.uid || root.child('rooms').child($code).child('slots/p2/uid').val() === auth.uid || root.child('rooms').child($code).child('slots/p3/uid').val() === auth.uid)"
           }
