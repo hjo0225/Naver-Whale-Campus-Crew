@@ -75,6 +75,8 @@
     background: var(--color-bg);
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
+    /* 자간/장평 살짝 — 한글 가독성 + 보드룩 여유감 */
+    letter-spacing: 0.012em;
   }
 
   button {
@@ -1437,6 +1439,7 @@
   @media (max-width: 768px) {
     .fullpage--touch {
       height: auto;
+      min-height: 100vh; /* dvh 미지원 폴백 */
       min-height: 100dvh;
       overflow-y: auto;
       overflow-x: hidden;
@@ -1447,6 +1450,7 @@
     .fullpage--touch > .fullpage-page {
       position: relative;
       inset: auto;
+      min-height: 100vh; /* dvh 미지원 폴백 */
       min-height: 100dvh;
       scroll-snap-align: start;
       scroll-snap-stop: always;

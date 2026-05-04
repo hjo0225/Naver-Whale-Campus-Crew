@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { REFERRAL_CODE } from "@/lib/config";
+import { APP_DOWNLOAD, REFERRAL_CODE } from "@/lib/config";
 import { useGameStore } from "@/lib/store/gameStore";
 import { FullPageSlider } from "@/components/ui/FullPageSlider";
 
@@ -20,13 +20,15 @@ function IntroPage() {
           마우스 휠을 굴려서 단계별로 확인하세요.
         </p>
         <p className="text-base text-(--color-text-muted) max-w-[480px] mx-auto md:mx-0">
-          본인 PC의 웨일 브라우저에서 추천인 코드를 등록하고, 인증 화면을 캡처해서 부스에 보여주시면 됩니다.
+          웨일 앱에서 추천인 코드를 등록하고, 인증 화면을 캡처해서 부스에 보여주시면 됩니다.
         </p>
       </div>
-      <div className="aspect-[16/10] bg-(--color-board-soft) border border-dashed border-(--color-text-muted)/40 rounded-2xl flex items-center justify-center text-(--color-text-muted) text-center p-8 text-lg">
-        부스 안내 이미지
-        <br />
-        (추후 삽입)
+      <div className="aspect-[16/10] flex items-center justify-center p-4">
+        <img
+          src="/wf_02.png"
+          alt="웨일프렌즈 캐릭터들"
+          className="w-full h-full object-contain"
+        />
       </div>
     </div>
   );
@@ -34,39 +36,45 @@ function IntroPage() {
 
 function Step1Page() {
   return (
-    <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+    <div className="grid md:grid-cols-2 gap-10 md:gap-2 items-center">
       <div>
         <span className="eyebrow mb-5">STEP 01</span>
         <h2 className="display-h2 mt-4 mb-6">
-          웨일 브라우저에서
+          웨일 앱에서
           <br />
           추천인 코드 입력
         </h2>
         <p className="text-lg text-(--color-text-secondary) leading-relaxed mb-3">
-          본인 PC의 네이버 웨일 브라우저를 실행하고{" "}
+          네이버 웨일 앱을 실행하고{" "}
           <strong className="text-(--color-text)">설정 → 추천인 코드</strong> 메뉴로 이동해주세요.
         </p>
         <p className="text-lg text-(--color-text-secondary) leading-relaxed mb-3">
           안내 화면에서 부스 추천인 코드를 입력하면 등록 완료입니다.
         </p>
-        <p className="text-base text-(--color-text-muted)">
-          웨일 브라우저가 설치돼 있지 않으시면 부스 운영진에게 말씀해 주세요.
-        </p>
       </div>
       <div className="grid grid-cols-3 gap-3">
         {[
-          { step: "1", label: "설정 진입" },
-          { step: "2", label: "추천인 코드 메뉴" },
-          { step: "3", label: "코드 입력" },
+          { step: "1", label: "메뉴 열기", img: "/referral-1.png" },
+          { step: "2", label: "설정", img: "/referral-2.png" },
+          { step: "3", label: "추천인 코드", img: "/referral-3.png" },
         ].map((s) => (
           <div
             key={s.step}
-            className="surface-card muted aspect-[9/16] flex flex-col items-center justify-center text-(--color-text-muted) p-3 text-center"
+            className="surface-card muted aspect-[9/16] p-2 flex flex-col text-center"
           >
-            <div className="text-xs font-bold tracking-[0.12em] text-(--color-brand) mb-2">
+            <div className="text-xs font-bold tracking-[0.12em] text-(--color-brand) mb-1.5">
               STEP {s.step}
             </div>
-            <div className="text-sm leading-relaxed">{s.label}</div>
+            <div className="flex-1 min-h-0 rounded-md overflow-hidden bg-white border border-(--color-divider) mb-1.5">
+              <img
+                src={s.img}
+                alt={s.label}
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <div className="text-xs sm:text-sm font-semibold leading-relaxed">
+              {s.label}
+            </div>
           </div>
         ))}
       </div>
@@ -78,12 +86,9 @@ function Step2Page({ onCopy }: { onCopy: () => void }) {
   return (
     <div className="text-center max-w-[760px] mx-auto">
       <span className="eyebrow mb-5">STEP 02</span>
-      <h2 className="display-h2 mt-4 mb-6">
-        코드 복사
-        <br />+ 인증 화면 캡처
-      </h2>
+      <h2 className="display-h2 mt-4 mb-6">추천인 등록</h2>
       <p className="text-lg text-(--color-text-secondary) max-w-[540px] mx-auto mb-10">
-        아래 코드를 복사해서 웨일 브라우저에 입력하고, 인증 완료 화면을 캡처해 주세요.
+        아래 코드를 복사해서 웨일 앱에 입력하고, 인증 완료 화면을 캡처해 주세요.
       </p>
 
       <div className="surface-card brand flex items-center justify-between gap-4 max-w-[500px] mx-auto mb-2">
@@ -94,18 +99,27 @@ function Step2Page({ onCopy }: { onCopy: () => void }) {
           복사
         </button>
       </div>
-      <p className="text-sm text-(--color-text-muted) mb-10">
+      <p className="text-sm text-(--color-text-muted) mb-8">
         복사 버튼을 누르면 클립보드에 저장됩니다
       </p>
 
-      <div className="surface-card accent max-w-[540px] mx-auto text-left px-6 sm:px-8 py-6 sm:py-7">
-        <div className="text-xs font-bold tracking-[0.12em] text-(--color-accent-deep) mb-3">
-          인증 화면 캡처 안내
-        </div>
-        <p className="text-base leading-relaxed text-(--color-text-secondary)">
-          코드 입력 후 표시되는{" "}
-          <strong className="text-(--color-text)">"등록 완료" 화면을 캡처</strong>해 두세요. 부스에서 운영진에게 보여주시면 됩니다.
-        </p>
+      <div className="flex gap-2 justify-center flex-wrap">
+        <a
+          href={APP_DOWNLOAD.android}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="cta-btn cta-btn-ghost cta-btn-large"
+        >
+          Google Play
+        </a>
+        <a
+          href={APP_DOWNLOAD.ios}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="cta-btn cta-btn-ghost cta-btn-large"
+        >
+          App Store
+        </a>
       </div>
     </div>
   );
@@ -115,9 +129,9 @@ function Step3Page() {
   return (
     <div className="text-center max-w-[760px] mx-auto">
       <span className="eyebrow mb-5">STEP 03</span>
-      <h2 className="display-h2 mt-4 mb-6">현장 인증 + 게임 참여</h2>
+      <h2 className="display-h2 mt-4 mb-6">현장 인증 후 게임 참여</h2>
       <p className="text-lg text-(--color-text-secondary) max-w-[540px] mx-auto mb-10">
-        캡처한 인증 화면을 부스 운영진에게 보여주시면 바로 게임을 시작할 수 있어요.
+        캡처한 인증 화면을 부스 운영진에게 보여주면 게임을 즐길 수 있어요.
       </p>
 
       <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-[600px] mx-auto mb-10">

@@ -47,9 +47,16 @@ export function FullPageSlider({
 }: FullPageSliderProps) {
   const [index, setIndex] = useState<number>(() => pattern?.[0] ?? 0);
   const rootRef = useRef<HTMLDivElement>(null);
-  const [isTouch, setIsTouch] = useState(false);
+  // 첫 렌더부터 정확한 값 — SSR(=false) → 클라이언트 첫 마운트에서 matchMedia 즉시 평가.
+  // (이전엔 useState(false) 후 useEffect 에서 갱신해 모바일 첫 페인트가 wheel 모드로 깔리며
+  //  overflow:hidden 이 적용돼 스크롤이 안되는 한 프레임이 있었음.)
+  const [isTouch, setIsTouch] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    if (typeof window.matchMedia !== "function") return false;
+    return window.matchMedia("(max-width: 768px)").matches;
+  });
 
-  // 모바일 감지 — wheel 리스너 미부착 + scroll-snap 폴백 클래스 토글
+  // 모바일 감지 — viewport 변경 시 동기화 (회전/창 크기 변경 대응)
   useEffect(() => {
     if (!enableTouchFallback) return;
     const mq = window.matchMedia("(max-width: 768px)");
@@ -59,7 +66,7 @@ export function FullPageSlider({
     return () => mq.removeEventListener("change", update);
   }, [enableTouchFallback]);
 
-  // wheel 모드 — debounced 휠 핸들러
+  // wheel 모드 — debounced 휠 / 키보드 핸들러 (cooldown 공유)
   useEffect(() => {
     if (mode !== "wheel") return;
     if (isTouch) return;
@@ -67,17 +74,36 @@ export function FullPageSlider({
     if (!el) return;
 
     let lockedUntil = 0;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
+    const advance = (dir: 1 | -1) => {
       const now = performance.now();
       if (now < lockedUntil) return;
-      if (Math.abs(e.deltaY) < 8) return; // 트랙패드 노이즈 컷
       lockedUntil = now + cooldownMs;
-      const dir = e.deltaY > 0 ? 1 : -1;
       setIndex((i) => Math.max(0, Math.min(pages.length - 1, i + dir)));
     };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (Math.abs(e.deltaY) < 8) return; // 트랙패드 노이즈 컷
+      advance(e.deltaY > 0 ? 1 : -1);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      // 입력 필드 포커스 중이면 무시
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
+        e.preventDefault();
+        advance(1);
+      } else if (e.key === "ArrowUp" || e.key === "PageUp") {
+        e.preventDefault();
+        advance(-1);
+      }
+    };
     el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKeyDown);
+    };
   }, [mode, cooldownMs, pages.length, isTouch]);
 
   // auto 모드 — Slideshow 호환 setInterval

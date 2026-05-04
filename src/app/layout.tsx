@@ -4,7 +4,7 @@ import { Toast } from "@/components/ui/Toast";
 import { OperatorShortcuts } from "@/components/ui/OperatorShortcuts";
 
 export const metadata: Metadata = {
-  title: "네이버 웨일 부스 — 한양대 축제",
+  title: "HYU NAVER CAMPUS CREW",
   description: "네이버 웨일 캠퍼스크루 부스 게임",
 };
 

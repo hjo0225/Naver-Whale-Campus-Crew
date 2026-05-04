@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
-import { CARD_TYPES, CHAR_IMAGES, LLAMA_CARD } from "@/lib/game/data";
+import { CARD_TYPES, LLAMA_CARD } from "@/lib/game/data";
 import { SLIDE_DURATION_MS, SLIDE_PATTERN } from "@/lib/config";
 import { Card } from "@/components/game/Card";
 import { FullPageSlider } from "@/components/ui/FullPageSlider";
 import { useGameStore } from "@/lib/store/gameStore";
-import type { CharKey } from "@/lib/game/types";
 
 interface FeatureSlide {
   eyebrow: string;
@@ -21,47 +20,32 @@ const FEATURE_SLIDES: readonly FeatureSlide[] = [
   {
     eyebrow: "기능 01",
     title: "사이드바",
-    desc: "브라우저 옆에 학습·검색·번역 도구가 한 번에. 페이지를 이리저리 옮기지 않고 한 화면에서 작업해요",
-    tags: ["바로가기", "번역", "검색"],
+    desc: "브라우저 옆 독립 영역에 즐겨찾기·파파고 번역·계산기·뮤직·확장앱을 모아두고, 메인 페이지를 보면서 동시에 사용해요",
+    tags: ["바로가기", "파파고 번역", "확장앱"],
     scenario: "강의 자료 보면서 동시에 단어 검색·번역 · 발표 자료 만들면서 자료 정리",
   },
   {
     eyebrow: "기능 02",
-    title: "웨일 스페이스",
-    desc: "탭 그룹으로 작업·공부·취미를 따로 관리. 여러 프로필을 한 창에서 전환하고 클라우드 동기화로 어디서나 동일한 환경",
-    tags: ["탭 그룹", "멀티 프로필", "동기화"],
-    scenario: "학교 / 알바 / 사이드 프로젝트 탭 분리 · 노트북·데스크탑 같은 환경 유지",
+    title: "퀵서치",
+    desc: "단어를 드래그하면 그 자리에 작은 팝업으로 검색·파파고 번역 결과가 떠요. 페이지를 떠나지 않고 바로 확인",
+    tags: ["드래그 검색", "팝업", "파파고"],
+    scenario: "PDF 보다가 모르는 단어 즉시 검색 · 외국어 자료 빠르게 번역",
   },
   {
     eyebrow: "기능 03",
-    title: "웨일온",
-    desc: "설치 없이 브라우저에서 바로 화상회의. 시간 제한 없이 무료로 사용 가능하고 화면 공유·녹화·자막까지 한 번에",
-    tags: ["설치 불필요", "무료", "화면 공유"],
-    scenario: "팀플 발표 연습 · 온라인 스터디 · 멀리 있는 친구와 게임 같이 보기",
+    title: "멀티검색",
+    desc: "한 번 입력하면 네이버·구글·다음 등 여러 검색엔진 결과를 한 화면에 나란히. 출처별 결과를 동시에 비교해요",
+    tags: ["동시 검색", "엔진 비교", "AI 검색"],
+    scenario: "과제 자료 다양한 출처로 빠르게 비교 · 같은 키워드 다른 결과 한눈에",
   },
   {
     eyebrow: "기능 04",
-    title: "그린드랍",
-    desc: "모바일과 PC 사이에 사진·파일·URL을 한 번의 탭으로 전송. 메신저를 거치지 않고 직접 보내고 받을 수 있어요",
-    tags: ["파일 전송", "URL 공유", "크로스 디바이스"],
-    scenario: "폰으로 찍은 사진 PC로 즉시 전송 · 모바일에서 본 페이지 PC로 이어보기",
-  },
-  {
-    eyebrow: "기능 05 · NEW",
-    title: "멀티플레이",
-    desc: "친구들과 같은 탭을 실시간으로 보며 음성으로 대화하는 협업 공간. 링크 하나로 초대해 함께 검색하고 함께 탐색해요",
-    tags: ["실시간 탭 공유", "음성 채팅", "팔로우 · 스포트라이트"],
-    scenario: "조모임 자료 같이 찾기 · 친구와 같은 페이지 보면서 통화 · 발표 리허설",
+    title: "듀얼탭",
+    desc: "한 창을 두 화면으로 분할. 왼쪽에서 누른 링크가 오른쪽에 열려서, 목록과 본문을 동시에 보면서 작업해요",
+    tags: ["화면 분할", "한 창 두 탭", "Ctrl+Shift+S"],
+    scenario: "강의 영상 보면서 노트 정리 · 두 자료 비교하면서 정리",
   },
 ] as const;
-
-const HEADER_FRIENDS_ORDER: CharKey[] = [
-  "byul_e",
-  "dalto",
-  "naver_whale",
-  "ghost_whale",
-  "pepo",
-];
 
 function QRPanel() {
   return (
@@ -87,17 +71,6 @@ function IntroSlide() {
           <br />
           <span className="text-(--color-brand-cyan)">캠퍼스 부스</span>
         </h1>
-        <p className="text-xl text-[#C9D3DD] mb-10">함께하면 더 즐거운 한 판</p>
-        <div className="flex gap-4 mb-12">
-          {HEADER_FRIENDS_ORDER.map((c) => (
-            <img
-              key={c}
-              src={CHAR_IMAGES[c]}
-              alt={c}
-              className="w-24 h-24 rounded-full bg-white/10 object-cover"
-            />
-          ))}
-        </div>
         <Link
           href="/conditions/"
           className="cta-btn cta-btn-primary cta-btn-pill !bg-white !text-(--color-brand-deep)"
