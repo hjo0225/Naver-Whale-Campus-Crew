@@ -102,22 +102,57 @@ function Step2Page({ onCopy }: { onCopy: () => void }) {
         복사 버튼을 누르면 클립보드에 저장됩니다
       </p>
 
-      <div className="flex gap-2 justify-center flex-wrap">
+      <div className="flex gap-2 max-w-[500px] mx-auto">
         <a
           href={APP_DOWNLOAD.android}
           target="_blank"
           rel="noopener noreferrer"
-          className="cta-btn cta-btn-ghost cta-btn-large"
+          className="cta-btn cta-btn-ghost cta-btn-large flex-1"
         >
-          Google Play
+          <svg
+            className="w-5 h-5 shrink-0"
+            viewBox="0 0 32 32"
+            aria-hidden="true"
+          >
+            <path
+              fill="#00C3FF"
+              d="M3.6 1.8c-.4.2-.6.6-.6 1V29.3c0 .4.2.7.5.9L19 16 3.6 1.8z"
+            />
+            <path
+              fill="#FFCB07"
+              d="M21 18l-4-4 4-4 6 3.4c1 .6 1 2 0 2.6L21 18z"
+            />
+            <path
+              fill="#FF3939"
+              d="M3.6 1.8L19 16l-15.5 14.2c-.3-.2-.5-.5-.5-.9 0-.5 0-26.6 0-26.6 0-.4.2-.7.6-.9z"
+              opacity=".001"
+            />
+            <path
+              fill="#FF3939"
+              d="M19 16L3.6 30.2c.4.2.9.1 1.3-.1L23 19l-4-3z"
+            />
+            <path
+              fill="#00CD53"
+              d="M19 16L23 13 4.9 1.9c-.4-.2-.9-.3-1.3-.1L19 16z"
+            />
+          </svg>
+          <span>Google Play</span>
         </a>
         <a
           href={APP_DOWNLOAD.ios}
           target="_blank"
           rel="noopener noreferrer"
-          className="cta-btn cta-btn-ghost cta-btn-large"
+          className="cta-btn cta-btn-ghost cta-btn-large flex-1"
         >
-          App Store
+          <svg
+            className="w-5 h-5 shrink-0"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+          </svg>
+          <span>App Store</span>
         </a>
       </div>
     </div>
