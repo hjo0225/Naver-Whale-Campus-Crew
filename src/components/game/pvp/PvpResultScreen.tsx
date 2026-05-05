@@ -6,8 +6,6 @@ export function PvpResultScreen() {
   const room = usePvpStore((s) => s.room);
   const mySeat = usePvpStore(selectMySeat);
   const nextGame = usePvpStore((s) => s.nextGame);
-  const mySlot = usePvpStore((s) => s.mySlot);
-
   const state = room?.state;
   if (!state || mySeat === null) return null;
   const history = state.roundHistory ?? [];
@@ -57,19 +55,13 @@ export function PvpResultScreen() {
           })}
         </div>
 
-        {mySlot === "p0" ? (
-          <button
-            type="button"
-            onClick={() => void nextGame()}
-            className="w-full rounded-2xl bg-emerald-500 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-emerald-600"
-          >
-            다음 게임 (운영진)
-          </button>
-        ) : (
-          <p className="text-center text-sm text-slate-500">
-            운영진이 다음 게임을 시작할 때까지 잠시만 기다려주세요
-          </p>
-        )}
+        <button
+          type="button"
+          onClick={() => void nextGame()}
+          className="w-full rounded-2xl bg-emerald-500 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-emerald-600"
+        >
+          로비로 이동
+        </button>
       </div>
     </div>
   );
