@@ -130,7 +130,7 @@ function endGame(state: RoomState): RoomState {
     scores,
     playerPlace,
   };
-  const nextHistory = [...state.roundHistory, entry];
+  const nextHistory = [...(state.roundHistory ?? []), entry];
 
   return {
     ...state,
@@ -254,7 +254,7 @@ export function applyNpcStep(state: RoomState): RoomState {
     round: state.round,
     totalRounds: state.totalRounds,
     totalScores: state.totalScores,
-    roundHistory: state.roundHistory,
+    roundHistory: state.roundHistory ?? [],
   });
   if (!decision) return endGame(state);
 

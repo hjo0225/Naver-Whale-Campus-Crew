@@ -91,10 +91,23 @@ export function roomRef(code: string) {
   return ref(getDb(), `rooms/${code}`);
 }
 
+/** Firebase RTDB는 빈 배열을 생략하므로 읽을 때 복원한다. */
+function normalizeRoom(raw: Room): Room {
+  if (raw.state) {
+    raw.state.roundHistory ??= [];
+    raw.state.deck ??= [];
+    raw.state.players ??= [];
+    for (const p of raw.state.players) {
+      p.hand ??= [];
+    }
+  }
+  return raw;
+}
+
 export function watchRoom(code: string, cb: (room: Room | null) => void): () => void {
   const r = roomRef(code);
   const unsub = onValue(r, (snap: DataSnapshot) => {
-    cb(snap.exists() ? (snap.val() as Room) : null);
+    cb(snap.exists() ? normalizeRoom(snap.val() as Room) : null);
   });
   return unsub;
 }

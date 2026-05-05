@@ -10,7 +10,8 @@ export function PvpResultScreen() {
 
   const state = room?.state;
   if (!state || mySeat === null) return null;
-  const last = state.roundHistory[state.roundHistory.length - 1];
+  const history = state.roundHistory ?? [];
+  const last = history[history.length - 1];
   if (!last) return null;
 
   const myRow = last.scores.find((s) => s.name === state.players[mySeat]?.name);

@@ -37,7 +37,8 @@ export function FinalResultScreen() {
   const { title, prizeText } = headlineFor(summary.place, summary.totalPlayers);
   const isWin = summary.prize === "both";
   const isLoser = summary.prize === "cheer";
-  const last = state.roundHistory[state.roundHistory.length - 1];
+  const history = state.roundHistory ?? [];
+  const last = history[history.length - 1];
   const sortedScores = last
     ? [...last.scores].sort((a, b) => a.place - b.place)
     : [];
