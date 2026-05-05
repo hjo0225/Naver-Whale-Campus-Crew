@@ -4,6 +4,9 @@ import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import {
   getAuth,
   signInAnonymously,
+  signOut,
+  setPersistence,
+  browserSessionPersistence,
   onAuthStateChanged,
   type Auth,
   type User,
@@ -73,11 +76,23 @@ export function getFbAuth(): Auth {
   return auth;
 }
 
-/** 익명 로그인 → uid 반환. 이미 로그인돼 있으면 즉시 반환. */
+const TAB_UID_KEY = "pvp:tab-uid";
+
+/**
+ * 익명 로그인 → uid 반환.
+ * sessionStorage에 이 탭의 uid가 있으면 재사용(새로고침 대응),
+ * 없으면(새 탭) localStorage에 남은 이전 uid를 signOut으로 초기화 후 새로 발급.
+ * → 같은 PC에서 탭마다 다른 플레이어로 인식됨.
+ */
 export async function ensureAnonAuth(): Promise<string> {
+  const tabUid = sessionStorage.getItem(TAB_UID_KEY);
+  if (tabUid) return tabUid;
+
   const a = getFbAuth();
-  if (a.currentUser) return a.currentUser.uid;
+  await setPersistence(a, browserSessionPersistence);
+  if (a.currentUser) await signOut(a);
   const cred = await signInAnonymously(a);
+  sessionStorage.setItem(TAB_UID_KEY, cred.user.uid);
   return cred.user.uid;
 }
 
