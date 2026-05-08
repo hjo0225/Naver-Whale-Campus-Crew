@@ -15,14 +15,22 @@ function CompactRule01() {
   return (
     <div className="text-center max-w-[560px] mx-auto px-4">
       <span className="eyebrow mb-3">RULE 01 · 카드 종류</span>
-      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2 mb-3">카드는 6종류</h2>
+      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-2 mb-3">
+        카드는 6종류
+      </h2>
       <p className="text-sm sm:text-base text-(--color-text-secondary) mb-6">
-        1~5 숫자 카드와 캐릭6(라마) 카드. 마지막에 손에 들고 있으면{" "}
-        <strong className="text-(--color-text)">그 점수만큼 깎입니다</strong>.
+        1~5 숫자 카드와 캐릭6(라마) 카드로 구성되어 있습니다.{" "}
+        <p>
+          마지막에 카드를 손에 들고 있으면{" "}
+          <strong className="text-(--color-text)">그 점수만큼 깎입니다</strong>.
+        </p>
       </p>
       <div className="flex flex-wrap gap-2 justify-center mb-5">
         {CARD_TYPES.map((c) => (
-          <div key={String(c.id)} className="flex flex-col items-center gap-1.5">
+          <div
+            key={String(c.id)}
+            className="flex flex-col items-center gap-1.5"
+          >
             <Card card={c} size="mini" />
             <span className="text-xs font-bold text-(--color-text-secondary)">
               -{c.points}점
@@ -52,7 +60,10 @@ function CompactRule02() {
       </h2>
       <p className="text-sm sm:text-base text-(--color-text-secondary) mb-6">
         바닥에 놓인 카드와{" "}
-        <strong className="text-(--color-text)">같은 숫자나 한 칸 위 숫자만</strong> 낼 수 있어요.
+        <strong className="text-(--color-text)">
+          같은 숫자나 한 칸 위 숫자만
+        </strong>{" "}
+        낼 수 있어요.
       </p>
 
       <div className="flex flex-col items-center justify-center gap-3">
@@ -62,15 +73,21 @@ function CompactRule02() {
           </div>
           <Card card={CARD_TYPES[2]!} size="mini" />
         </div>
-        <div className="text-2xl text-(--color-text-muted) font-bold leading-none">↓</div>
+        <div className="text-2xl text-(--color-text-muted) font-bold leading-none">
+          ↓
+        </div>
         <div className="grid gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-green-600 text-sm w-14 text-left">✓ 가능</span>
+            <span className="font-bold text-green-600 text-sm w-14 text-left">
+              ✓ 가능
+            </span>
             <Card card={CARD_TYPES[2]!} size="mini" />
             <Card card={CARD_TYPES[3]!} size="mini" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-red-500 text-sm w-14 text-left">✗ 불가</span>
+            <span className="font-bold text-red-500 text-sm w-14 text-left">
+              ✗ 불가
+            </span>
             <Card card={CARD_TYPES[0]!} size="mini" faded />
             <Card card={CARD_TYPES[1]!} size="mini" faded />
             <Card card={CARD_TYPES[4]!} size="mini" faded />
@@ -79,7 +96,8 @@ function CompactRule02() {
       </div>
 
       <p className="text-sm text-(--color-text-secondary) mt-5">
-        <strong>5 위에는 캐릭6(라마)</strong>, <strong>캐릭6 위에는 1</strong>만 가능
+        <strong>5 위에는 캐릭6(라마)</strong>, <strong>캐릭6 위에는 1</strong>만
+        가능
       </p>
     </div>
   );
@@ -116,7 +134,7 @@ const RULE3_ACTIONS: readonly Rule3Action[] = [
       </span>
     ),
     exception:
-      "다른 사람이 모두 그만하면 뽑기 불가 — 낼 카드만 내거나 그만하세요",
+      "다른 사람이 모두 그만하면 카드뽑기 불가능\n낼 수 있는 카드만 내고 게임이 종료됩니다",
   },
 ];
 
@@ -138,7 +156,7 @@ function CompactRule03Sub({ a }: { a: Rule3Action }) {
           <span className="text-[10px] font-bold tracking-[0.12em] text-(--color-brand) shrink-0 mt-0.5">
             예외
           </span>
-          <span>
+          <span className="whitespace-pre-line">
             <strong className="text-(--color-text)">{a.exception}</strong>
           </span>
         </div>
@@ -156,8 +174,10 @@ function CompactRule04() {
       </h2>
       <p className="text-sm sm:text-base text-(--color-text-secondary) mb-6">
         라운드 끝에 손에 남은 카드만큼{" "}
-        <strong className="text-(--color-text)">점수가 깎입니다</strong>. 0장이면 페널티 없음,
-        라마(8점)는 가장 무거운 폭탄.
+        <strong className="text-(--color-text)">점수가 깎입니다</strong>.
+        <p>
+          손에 패가 없다면 승리/다 낸 사람이 없다면 점수가 제일 높은 사람이 승리
+        </p>
       </p>
       <div className="flex flex-wrap justify-center gap-2 mb-5">
         <Card card={CARD_TYPES[0]!} size="mini" />
@@ -184,8 +204,8 @@ function CompactRule05() {
         네 명이 모여서 한 판
       </h2>
       <p className="text-xs sm:text-sm text-(--color-text-secondary) mb-4">
-        손님 + 웨일프렌즈 <strong className="text-(--color-text)">3명</strong>이 한 테이블에서 한 판.
-        손에 남은 카드 점수가{" "}
+        손님 + 웨일프렌즈 <strong className="text-(--color-text)">3명</strong>이
+        한 테이블에서 한 판. 손에 남은 카드 점수가{" "}
         <strong className="text-(--color-text)">가장 낮은 사람이 1등!</strong>
       </p>
 
@@ -237,7 +257,7 @@ export function ConditionsRulesScreen() {
       <CompactRule04 key="r4" />,
       <CompactRule05 key="r5" />,
     ],
-    [],
+    []
   );
 
   return <FullPageSlider pages={pages} mode="wheel" variant="light" />;

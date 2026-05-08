@@ -136,7 +136,7 @@ export function Rule03Page() {
         <span className="text-xs font-bold tracking-[0.12em] text-(--color-brand) shrink-0">예외</span>
         <span>
           <strong className="text-(--color-text)">다른 사람이 모두 그만하면 뽑기 불가</strong>
-          {" "}— 낼 카드만 내거나 그만하세요
+          <br />— 낼 카드만 내거나 그만하세요
         </span>
       </div>
     </div>
@@ -174,19 +174,28 @@ export function Rule05Page({
   showStartButton = true,
   startHref = "/game/",
   startLabel = "게임 시작하기 →",
+  pvp = false,
 }: {
   showStartButton?: boolean;
-  /** 시작 버튼이 이동할 경로 (PvP의 경우 /game/pvp/) */
   startHref?: string;
-  /** 시작 버튼 라벨 (PvP의 경우 "로비 입장 →") */
   startLabel?: string;
+  pvp?: boolean;
 } = {}) {
   return (
     <div className="text-center max-w-[1200px] mx-auto">
       <span className="eyebrow mb-5">RULE 05 · 승리 조건</span>
       <h2 className="display-h2 mt-4 mb-5">네 명이 모여서 한 판</h2>
       <p className="text-base sm:text-lg text-(--color-text-secondary) mb-8">
-        손님 + 웨일프렌즈 <strong className="text-(--color-text)">3명</strong>이 한 테이블에서 한 판.
+        {pvp ? (
+          <>
+            방에 참가한 <strong className="text-(--color-text)">사람들</strong>과 한 테이블에서 한 판.
+            빈 자리는 웨일프렌즈 NPC가 채워요.
+          </>
+        ) : (
+          <>
+            손님 + 웨일프렌즈 <strong className="text-(--color-text)">3명</strong>이 한 테이블에서 한 판.
+          </>
+        )}{" "}
         손에 남은 카드 점수가{" "}
         <strong className="text-(--color-text)">가장 낮은 사람이 1등!</strong>
       </p>
@@ -259,6 +268,7 @@ export function PvpRulesScreen() {
         key="r5"
         startHref="/game/pvp/"
         startLabel="로비 입장 →"
+        pvp
       />,
     ],
     [],

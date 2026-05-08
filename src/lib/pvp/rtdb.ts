@@ -78,22 +78,41 @@ export function getFbAuth(): Auth {
 
 const TAB_UID_KEY = "pvp:tab-uid";
 
+let _tabUid: string | null = null;
+
+function isPageReload(): boolean {
+  try {
+    const nav = performance.getEntriesByType(
+      "navigation"
+    )[0] as PerformanceNavigationTiming | undefined;
+    return nav?.type === "reload";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * 익명 로그인 → uid 반환.
- * sessionStorage에 이 탭의 uid가 있으면 재사용(새로고침 대응),
- * 없으면(새 탭) localStorage에 남은 이전 uid를 signOut으로 초기화 후 새로 발급.
- * → 같은 PC에서 탭마다 다른 플레이어로 인식됨.
+ * - 새로고침(F5): sessionStorage uid 재사용 → 게임 연결 유지
+ * - 새 탭 / 탭 복제(Ctrl+D): 항상 새 uid 발급 → 별도 플레이어로 인식
  */
 export async function ensureAnonAuth(): Promise<string> {
-  const tabUid = sessionStorage.getItem(TAB_UID_KEY);
-  if (tabUid) return tabUid;
+  if (_tabUid) return _tabUid;
 
   const a = getFbAuth();
   await setPersistence(a, browserSessionPersistence);
+
+  const storedUid = sessionStorage.getItem(TAB_UID_KEY);
+  if (storedUid && isPageReload()) {
+    _tabUid = storedUid;
+    return storedUid;
+  }
+
   if (a.currentUser) await signOut(a);
   const cred = await signInAnonymously(a);
-  sessionStorage.setItem(TAB_UID_KEY, cred.user.uid);
-  return cred.user.uid;
+  _tabUid = cred.user.uid;
+  sessionStorage.setItem(TAB_UID_KEY, _tabUid);
+  return _tabUid;
 }
 
 export function watchAuth(cb: (user: User | null) => void): () => void {

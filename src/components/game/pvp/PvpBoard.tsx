@@ -4,10 +4,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Card, CardBack } from "@/components/game/Card";
 import { canPlay } from "@/lib/game/rules";
 import { canPlayerDraw, canPlayerQuit, isMyTurn } from "@/lib/pvp/engine";
-import type { RoomPlayer } from "@/lib/pvp/schema";
+import type { RoomPlayer, RoomState } from "@/lib/pvp/schema";
 import { CHAR_IMAGES } from "@/lib/game/data";
 import { selectMySeat, usePvpStore } from "@/lib/store/pvpStore";
 import { cn } from "@/lib/utils";
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+const PLAY_STAGING_DURATION = 1.1;
+const PLAY_STAGING_TIMES = [0, 0.3, 0.65, 1] as const;
 
 type VisualPos = "bottom" | "top" | "left" | "right";
 
@@ -34,6 +38,23 @@ function visualOrder(mySeat: number, total: number): Record<VisualPos, number> {
   };
 }
 
+function getPvpThrowOrigin(
+  state: RoomState,
+  order: Record<VisualPos, number>
+): { x: number; y: number } {
+  if (!state.top) return { x: 0, y: 0 };
+  const thrower = state.players.find(
+    (p) => p.lastAction?.type === "play" && p.lastAction.card.uid === state.top!.uid
+  );
+  if (!thrower) return { x: 0, y: 0 };
+  const s = thrower.seat;
+  if (s === order.bottom) return { x: 0, y: 380 };
+  if (s === order.top) return { x: 0, y: -380 };
+  if (s === order.left) return { x: -460, y: 0 };
+  if (s === order.right) return { x: 460, y: 0 };
+  return { x: 0, y: 0 };
+}
+
 function fanRotate(i: number, total: number): number {
   if (total <= 1) return 0;
   const spread = Math.min(34, total * 7);
@@ -52,6 +73,7 @@ export function PvpBoard() {
   if (!state || mySeat === null) return null;
 
   const order = visualOrder(mySeat, state.players.length);
+  const throwOrigin = getPvpThrowOrigin(state, order);
   const me = state.players[order.bottom]!;
   const topP = state.players[order.top]!;
   const leftP = state.players[order.left]!;
@@ -80,10 +102,26 @@ export function PvpBoard() {
                       <motion.div
                         key={state.top.uid}
                         className="absolute inset-0"
-                        initial={{ scale: 0.7, opacity: 0, rotate: -8 }}
-                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                        initial={{
+                          x: throwOrigin.x,
+                          y: throwOrigin.y,
+                          scale: 0.7,
+                          opacity: 0,
+                          rotate: -8,
+                        }}
+                        animate={{
+                          x: [throwOrigin.x, 0, 0, 0],
+                          y: [throwOrigin.y, -50, -50, 0],
+                          scale: [0.7, 1.5, 1.5, 1],
+                          opacity: [0, 1, 1, 1],
+                          rotate: [-8, 2, 2, 0],
+                        }}
                         exit={{ opacity: 0, scale: 0.85 }}
-                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                        transition={{
+                          duration: PLAY_STAGING_DURATION,
+                          times: [...PLAY_STAGING_TIMES],
+                          ease: EASE,
+                        }}
                       >
                         <Card card={state.top} size="large" />
                       </motion.div>
